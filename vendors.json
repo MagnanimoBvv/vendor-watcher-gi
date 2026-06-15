@@ -1,0 +1,126 @@
+[
+  {
+    "abbr": "4p",
+    "name": "4Promo",
+    "adapter": "4promo",
+    "endpoint": "https://4promotional.net:9090/WsEstrategia/inventario",
+    "credentialEnvs": [],
+    "rules": {
+      "newProducts":  { "strategy": "diff", "field": "producto_nuevo" },
+      "discontinued": { "strategy": "diff" },
+      "offers":       { "field": "producto_promocion" },
+      "pricing":      { "field": "precio" },
+      "variantKey":   { "strategy": "name", "field": "color" }
+    }
+  },
+  {
+    "abbr": "in",
+    "name": "Innova",
+    "adapter": "innova",
+    "endpoint": "https://4vumtdis3m.execute-api.us-east-1.amazonaws.com/default/Innovation_GetAllProductos",
+    "credentialEnvs": ["INNOVA_USER", "INNOVA_PASS", "INNOVA_AUTH_TOKEN"],
+    "rules": {
+      "newProducts":  { "strategy": "diff" },
+      "discontinued": { "strategy": "diff" },
+      "offers":       { "field": "Outlet" },
+      "pricing":      { "field": "Precio", "factor": 0.8178 },
+      "variantKey":   { "strategy": "name", "field": "Tono" }
+    }
+  },
+  {
+    "abbr": "po",
+    "name": "PromoOpcion",
+    "adapter": "promoopcion",
+    "endpoint": "https://promocionalesenlinea.net/api/all-products",
+    "credentialEnvs": ["PO_USER", "PO_PASS"],
+    "rules": {
+      "newProducts":  { "strategy": "diff" },
+      "discontinued": { "strategy": "field", "field": "estatus", "trueValues": ["0"] },
+      "offers":       { "field": "tipo" },
+      "pricing":      { "field": "precio" },
+      "variantKey":   { "strategy": "sku", "field": "sku" }
+    }
+  },
+  {
+    "abbr": "g4",
+    "name": "G4",
+    "adapter": "g4",
+    "endpoint": "https://distr.ws.g4mexico.com/index.php",
+    "credentialEnvs": ["G4_USER", "G4_KEY"],
+    "rules": {
+      "newProducts":  { "strategy": "diff", "field": "novedad" },
+      "discontinued": { "strategy": "diff" },
+      "offers":       { "field": "promocion" },
+      "pricing":      { "field": "precio" },
+      "variantKey":   { "strategy": "name", "field": "color" }
+    }
+  },
+  {
+    "abbr": "dv",
+    "name": "Doble Vela",
+    "adapter": "doblevela",
+    "endpoint": "http://srv-datos.dyndns.info/doblevela/service.asmx/GetExistenciaAll",
+    "credentialEnvs": ["DV_KEY"],
+    "rules": {
+      "newProducts":  { "strategy": "diff", "field": "Status" },
+      "discontinued": { "strategy": "diff" },
+      "offers":       { "field": "Status" },
+      "pricing":      { "field": "Price" },
+      "variantKey":   { "strategy": "sku", "field": "CLAVE" }
+    }
+  },
+  {
+    "abbr": "cdo",
+    "name": "CDO",
+    "adapter": "cdo",
+    "endpoint": "http://api.mexico.cdopromocionales.com/v2/products",
+    "credentialEnvs": ["CDO_AUTH_TOKEN"],
+    "rules": {
+      "newProducts":  { "strategy": "diff", "field": "novedad" },
+      "discontinued": { "strategy": "diff" },
+      "offers":       { "field": "categories" },
+      "pricing":      { "field": "net_price" },
+      "variantKey":   { "strategy": "name", "field": "color" }
+    }
+  },
+  {
+    "abbr": "pr",
+    "name": "Preslow",
+    "adapter": "preslow",
+    "endpoint": "https://cliente.preslow.app/v1/catalogo",
+    "credentialEnvs": ["PW_KEY"],
+    "rules": {
+      "newProducts":  { "strategy": "diff" },
+      "discontinued": { "strategy": "diff" },
+      "pricing":      { "field": "precio_distribuidor" },
+      "variantKey":   { "strategy": "name", "field": "color" }
+    }
+  },
+  {
+    "abbr": "il",
+    "name": "Impressline",
+    "adapter": "impressline",
+    "endpoint": "https://www.impressline.com.mx/api/v1/productos",
+    "credentialEnvs": ["ILN_AUTH_TOKEN"],
+    "rules": {
+      "newProducts":  { "strategy": "diff", "field": "tipo" },
+      "discontinued": { "strategy": "diff" },
+      "pricing":      { "field": "precio", "factor": 1.16 },
+      "variantKey":   { "strategy": "name", "field": "color" }
+    }
+  },
+  {
+    "abbr": "dk",
+    "name": "DKPS",
+    "adapter": "dkps",
+    "endpoint": "https://bfekkcapbvnilicqzpkr.supabase.co/functions/v1/api-rest/api/productos",
+    "credentialEnvs": ["DKPS_AUTH_TOKEN", "DKPS_WEB_AUTH_TOKEN"],
+    "rules": {
+      "newProducts":  { "strategy": "diff", "field": "ArticuloNuevo" },
+      "discontinued": { "strategy": "diff" },
+      "offers":       { "field": "ArticuloPromocion" },
+      "pricing":      { "field": "precio" },
+      "variantKey":   { "strategy": "sku", "field": "sku" }
+    }
+  }
+]

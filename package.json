@@ -1,0 +1,22 @@
+{
+  "name": "vendor-watcher-gi",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dry-run": "node index.js --dry-run",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Watcher de catálogo: detecta productos nuevos, descontinuados, cambios de precio y de variantes entre webservices de proveedores y tiendas Shopify.",
+  "dependencies": {
+    "axios": "^1.15.0",
+    "dotenv": "^17.4.2",
+    "form-data": "^4.0.0",
+    "pdf2pic": "^3.2.0",
+    "sharp": "^0.34.5",
+    "xml2js": "^0.6.2"
+  }
+}

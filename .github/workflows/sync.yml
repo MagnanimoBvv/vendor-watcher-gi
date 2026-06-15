@@ -1,0 +1,79 @@
+name: vendor-watcher-gi
+
+on:
+  schedule:
+    - cron: '0 3 * * *'   # 21:00 México (UTC-6), 1 vez al día
+  workflow_dispatch:
+    inputs:
+      shop:
+        description: 'Solo correr esta tienda (opcional)'
+        required: false
+      vendor:
+        description: 'Solo correr este proveedor (opcional)'
+        required: false
+      dryRun:
+        description: 'Dry run'
+        required: false
+        default: 'false'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        shop: [gi]
+        vendor: [4p, in, po, g4, cdo, il]
+        exclude:
+          - shop: hhglobal
+            vendor: g4
+          - shop: hhglobal
+            vendor: dv
+          - shop: hhglobal
+            vendor: cdo
+          - shop: hhglobal
+            vendor: pr
+          - shop: hhglobal
+            vendor: il
+          - shop: hhglobal
+            vendor: dk
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: npm ci
+
+      - name: Run watcher
+        env:
+          # SHOPIFY_TOKEN_LINK:     ${{ secrets.SHOPIFY_TOKEN_LINK }}
+          # GRAPHQL_URL_LINK:       ${{ secrets.GRAPHQL_URL_LINK }}
+          SHOPIFY_TOKEN_GI:       ${{ secrets.SHOPIFY_TOKEN_GI }}
+          GRAPHQL_URL_GI:         ${{ secrets.GRAPHQL_URL_GI }}
+          # SHOPIFY_TOKEN_HHGLOBAL: ${{ secrets.SHOPIFY_TOKEN_HHGLOBAL }}
+          # GRAPHQL_URL_HHGLOBAL:   ${{ secrets.GRAPHQL_URL_HHGLOBAL }}
+          # SHOPIFY_TOKEN_GNP:      ${{ secrets.SHOPIFY_TOKEN_GNP }}
+          # GRAPHQL_URL_GNP:        ${{ secrets.GRAPHQL_URL_GNP }}
+
+          INNOVA_USER:            ${{ secrets.INNOVA_USER }}
+          INNOVA_PASS:            ${{ secrets.INNOVA_PASS }}
+          INNOVA_AUTH_TOKEN:      ${{ secrets.INNOVA_AUTH_TOKEN }}
+          PO_USER:                ${{ secrets.PO_USER }}
+          PO_PASS:                ${{ secrets.PO_PASS }}
+          G4_USER:                ${{ secrets.G4_USER }}
+          G4_KEY:                 ${{ secrets.G4_KEY }}
+          DV_KEY:                 ${{ secrets.DV_KEY }}
+          CDO_AUTH_TOKEN:         ${{ secrets.CDO_AUTH_TOKEN }}
+          PW_KEY:                 ${{ secrets.PW_KEY }}
+          ILN_AUTH_TOKEN:         ${{ secrets.ILN_AUTH_TOKEN }}
+          DKPS_AUTH_TOKEN:        ${{ secrets.DKPS_AUTH_TOKEN }}
+          DKPS_WEB_AUTH_TOKEN:    ${{ secrets.DKPS_WEB_AUTH_TOKEN }}
+        run: |
+          ARGS="--shop=${{ matrix.shop }} --vendor=${{ matrix.vendor }}"
+          if [ "${{ github.event.inputs.dryRun }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          if [ -n "${{ github.event.inputs.shop }}" ] && [ "${{ github.event.inputs.shop }}" != "${{ matrix.shop }}" ]; then exit 0; fi
+          if [ -n "${{ github.event.inputs.vendor }}" ] && [ "${{ github.event.inputs.vendor }}" != "${{ matrix.vendor }}" ]; then exit 0; fi
+          node index.js $ARGS
