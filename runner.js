@@ -74,7 +74,7 @@ async function runShopVendor(shop, vendor, opts, report) {
         publications,
         report,
         entry,
-        computeTargetPrice: (raw) => computeTargetPrice(raw, shop, vendor),
+        computeTargetPrice: (raw, rawVariant) => computeTargetPrice(raw, shop, vendor, rawVariant),
     };
 
     await expireTagWindows(shopifyProducts, ctx);

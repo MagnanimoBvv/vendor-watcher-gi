@@ -149,7 +149,7 @@ function buildBaseVariantPayload(rawVariant, productMediaNodes, ctx, hasSize) {
             { name: rawVariant.color, optionName: 'Color' },
             ...(hasSize ? [{ name: rawVariant.talla || 'UNICA', optionName: 'Talla' }] : []),
         ],
-        price: computeTargetPrice(Number(rawVariant.precio)),
+        price: computeTargetPrice(Number(rawVariant.precio), rawVariant),
         taxable: false,
     };
 }

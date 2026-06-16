@@ -9,7 +9,7 @@
       "newProducts":  { "strategy": "diff", "field": "producto_nuevo" },
       "discontinued": { "strategy": "diff" },
       "offers":       { "field": "producto_promocion" },
-      "pricing":      { "field": "precio" },
+      "pricing":      { "field": "precio", "descuento": 0.25, "iva": 0.16 },
       "variantKey":   { "strategy": "name", "field": "color" }
     }
   },
@@ -23,7 +23,7 @@
       "newProducts":  { "strategy": "diff" },
       "discontinued": { "strategy": "diff" },
       "offers":       { "field": "Outlet" },
-      "pricing":      { "field": "Precio", "factor": 0.8178 },
+      "pricing":      { "field": "Precio", "descuento": 0.28, "iva": 0.16 },
       "variantKey":   { "strategy": "name", "field": "Tono" }
     }
   },
@@ -37,7 +37,7 @@
       "newProducts":  { "strategy": "diff" },
       "discontinued": { "strategy": "field", "field": "estatus", "trueValues": ["0"] },
       "offers":       { "field": "tipo" },
-      "pricing":      { "field": "precio" },
+      "pricing":      { "field": "precio", "descuento": 0.285, "iva": 0.16, "descuentoExcept": { "field": "tipo", "values": ["Unico", "Outlet"] } },
       "variantKey":   { "strategy": "sku", "field": "sku" }
     }
   },
@@ -51,7 +51,7 @@
       "newProducts":  { "strategy": "diff", "field": "novedad" },
       "discontinued": { "strategy": "diff" },
       "offers":       { "field": "promocion" },
-      "pricing":      { "field": "precio" },
+      "pricing":      { "field": "precio", "iva": 0.16 },
       "variantKey":   { "strategy": "name", "field": "color" }
     }
   },
@@ -65,7 +65,7 @@
       "newProducts":  { "strategy": "diff", "field": "Status" },
       "discontinued": { "strategy": "diff" },
       "offers":       { "field": "Status" },
-      "pricing":      { "field": "Price" },
+      "pricing":      { "field": "Price", "iva": 0.16 },
       "variantKey":   { "strategy": "sku", "field": "CLAVE" }
     }
   },
@@ -79,7 +79,7 @@
       "newProducts":  { "strategy": "diff", "field": "novedad" },
       "discontinued": { "strategy": "diff" },
       "offers":       { "field": "categories" },
-      "pricing":      { "field": "net_price" },
+      "pricing":      { "field": "net_price", "iva": 0.16 },
       "variantKey":   { "strategy": "name", "field": "color" }
     }
   },
@@ -105,7 +105,7 @@
     "rules": {
       "newProducts":  { "strategy": "diff", "field": "tipo" },
       "discontinued": { "strategy": "diff" },
-      "pricing":      { "field": "precio", "factor": 1.16 },
+      "pricing":      { "field": "precio", "descuento": 0.07, "iva": 0.16 },
       "variantKey":   { "strategy": "name", "field": "color" }
     }
   },
@@ -119,7 +119,7 @@
       "newProducts":  { "strategy": "diff", "field": "ArticuloNuevo" },
       "discontinued": { "strategy": "diff" },
       "offers":       { "field": "ArticuloPromocion" },
-      "pricing":      { "field": "precio" },
+      "pricing":      { "field": "precio", "iva": 0.16 },
       "variantKey":   { "strategy": "sku", "field": "sku" }
     }
   }

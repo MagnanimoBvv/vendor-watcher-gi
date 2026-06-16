@@ -42,7 +42,7 @@
     "productFormat": "simple",
     "vendors": ["4p", "in", "po", "g4", "dv", "cdo", "pr", "il", "dk"],
     "priceDivisor": {
-      "default": 0.75
+      "default": 0.5
     },
     "metafields": {
       "material": "material",
