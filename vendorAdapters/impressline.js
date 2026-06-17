@@ -1,7 +1,7 @@
 const axios = require('axios');
 const { categories, ecoCategories, normalizedSurfaces, normalizedPrintingTechniques } = require('./impressline.constants');
 const { buildHandle } = require('../handleParser');
-const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields } = require('./_shared');
+const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields, buildClassificationMetafields, filterMetafieldKeys, joinComma } = require('./_shared');
 
 async function fetchCatalog({ vendor }) {
     const r = await axios.get(vendor.endpoint, { headers: { 'Authorization': `Bearer ${process.env.ILN_AUTH_TOKEN}` } });
@@ -56,6 +56,19 @@ function getCategories(prod) {
     return (categories[cs] || '') + extra;
 }
 
+// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
+// ciclo normal del watcher.
+function buildMetafieldsForUpdate(normalized, ctx, keys) {
+    const prod = normalized.raw;
+    const logical = buildClassificationMetafields({
+        material: normalizedSurfaces[prod.material] || '',
+        materialFront: prod.material || '',
+        tecnicas: getNormalizedPrintingTechniques(prod.tipos_impresion),
+        tecnicasFront: joinComma(prod.tipos_impresion || []),
+    });
+    return mapShopMetafields(filterMetafieldKeys(logical, keys), ctx.shop);
+}
+
 function buildProductInput(normalized, ctx) {
     const { shop, vendor } = ctx;
     const prod = normalized.raw;
@@ -66,12 +79,11 @@ function buildProductInput(normalized, ctx) {
         vendor: vendor.name,
         tags: getCategories(prod),
         metafields: mapShopMetafields([
-            // { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: normalizedSurfaces[prod.material] || prod.material || '' },
-            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: prod.material || '' },
+            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: normalizedSurfaces[prod.material] || '' },
+            { key: 'material_front', namespace: 'custom', type: 'single_line_text_field', value: prod.material || '' },
             { key: 'medidas', namespace: 'custom', type: 'single_line_text_field', value: prod.tamano || '' },
-            // { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: getNormalizedPrintingTechniques(prod.tipos_impresion) },
-            { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: prod.tipos_impresion.join(', ') },
-            { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field', value: prod.tipos_impresion.join('/-/') },
+            { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: getNormalizedPrintingTechniques(prod.tipos_impresion) },
+            { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field', value: joinComma(prod.tipos_impresion || []) },
             { key: 'capacidad', namespace: 'custom', type: 'single_line_text_field', value: prod.capacidad || '' },
             { key: 'area_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: prod.area_impresion || '' },
             { key: 'peso', namespace: 'custom', type: 'single_line_text_field', value: prod.peso_caja && prod.piezas_por_caja ? `${(parseFloat(prod.peso_caja.replace(' kgs', '')) / prod.piezas_por_caja).toFixed(2)} kg` : '', },
@@ -135,6 +147,7 @@ async function uploadNewProduct(normalized, ctx) {
 module.exports = {
     fetchCatalog,
     buildProductInput,
+    buildMetafieldsForUpdate,
     expandVariantsForUpload,
     uploadNewProduct,
     buildAllMedia: (n) => buildMedia(n.raw),

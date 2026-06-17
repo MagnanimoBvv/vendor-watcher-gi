@@ -46,6 +46,7 @@
     },
     "metafields": {
       "material": "material",
+      "material_front": "material_front",
       "medidas": "medidas",
       "tecnicas_de_impresion": "tecnicas_de_impresion",
       "tecnicas_de_impresion_front": "tecnicas_de_impresion_front",

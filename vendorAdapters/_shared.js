@@ -124,6 +124,49 @@ function mapShopMetafields(logicalMetafields, shop) {
     return out;
 }
 
+// --- Actualización puntual de metafields (función "adaptable") -----------------
+// Estos helpers dan soporte a una actualización on-demand de metafields que NO
+// corre en el ciclo normal del watcher (ver reconcileMetafields / index.js
+// --update-metafields). Hoy se usan para los 4 campos de clasificación, pero el
+// diseño permite agregar más campos sin tocar la infraestructura.
+
+// Une un valor en una sola cadena separada por coma. Acepta un array tal cual o
+// una cadena que se parte por `sep` (default '/'). Limpia espacios y vacíos.
+// Útil para los campos "_front" crudos (sin normalizar).
+function joinComma(value, sep = '/') {
+    const arr = Array.isArray(value) ? value : String(value == null ? '' : value).split(sep);
+    return arr.map(s => String(s).trim()).filter(Boolean).join(', ');
+}
+
+// Mapeo prop -> key lógica canónica de la actualización de clasificación.
+const CLASSIFICATION_METAFIELD_KEYS = {
+    material: 'material',
+    materialFront: 'material_front',
+    tecnicas: 'tecnicas_de_impresion',
+    tecnicasFront: 'tecnicas_de_impresion_front',
+};
+
+// Construye los metafields lógicos (namespace custom, texto) de la actualización
+// de clasificación a partir de los valores YA calculados por cada adapter. Sólo
+// incluye las props presentes (undefined = el vendor no expone esa key, p.ej.
+// 4Promo no tiene material, Preslow no tiene técnicas).
+function buildClassificationMetafields(values) {
+    const out = [];
+    for (const [prop, key] of Object.entries(CLASSIFICATION_METAFIELD_KEYS)) {
+        if (values[prop] === undefined) continue;
+        out.push({ key, namespace: 'custom', type: 'single_line_text_field', value: values[prop] || '' });
+    }
+    return out;
+}
+
+// Filtra metafields lógicos por una lista de keys canónicas. keys nulo/vacío =>
+// no filtra (devuelve todos). Permite a --metafields=key1,key2 restringir qué se
+// actualiza.
+function filterMetafieldKeys(logicalMetafields, keys) {
+    if (!keys || keys.length === 0) return logicalMetafields;
+    return logicalMetafields.filter(m => keys.includes(m.key));
+}
+
 module.exports = {
     DEFAULT_SCALES,
     getScales,
@@ -135,4 +178,7 @@ module.exports = {
     buildMediaFromUrls,
     mapShopMetafields,
     slugify,
+    joinComma,
+    buildClassificationMetafields,
+    filterMetafieldKeys,
 };

@@ -6,13 +6,27 @@ const { runShopVendor } = require('./runner');
 const { makeReport } = require('./report');
 
 function parseArgs(argv) {
-    const opts = { dryRun: false, shop: null, vendor: null };
+    const opts = { dryRun: false, shop: null, vendor: null, updateMetafields: false, metafieldKeys: null };
     for (const arg of argv.slice(2)) {
         if (arg === '--dry-run') opts.dryRun = true;
         else if (arg.startsWith('--shop=')) opts.shop = arg.slice(7);
         else if (arg.startsWith('--vendor=')) opts.vendor = arg.slice(9);
+        // Modo especial (NO corre en el ciclo normal): sólo recalcula metafields.
+        // Opcionalmente --metafields=key1,key2 restringe qué keys lógicas escribir.
+        else if (arg === '--update-metafields') opts.updateMetafields = true;
+        else if (arg.startsWith('--metafields=')) {
+            opts.updateMetafields = true;
+            opts.metafieldKeys = arg.slice(13).split(',').map(s => s.trim()).filter(Boolean);
+        }
         else if (arg === '--help' || arg === '-h') {
-            console.log('Uso: node index.js [--dry-run] [--shop=<abbr>] [--vendor=<abbr>]');
+            console.log([
+                'Uso: node index.js [--dry-run] [--shop=<abbr>] [--vendor=<abbr>]',
+                '',
+                'Actualización puntual de metafields (no corre en el ciclo normal):',
+                '  --update-metafields            recalcula material, material_front,',
+                '                                 tecnicas_de_impresion y tecnicas_de_impresion_front',
+                '  --metafields=key1,key2         igual que --update-metafields pero sólo esas keys',
+            ].join('\n'));
             process.exit(0);
         }
     }

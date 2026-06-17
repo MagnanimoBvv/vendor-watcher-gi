@@ -194,10 +194,26 @@ const sizes = [
     'XXL'
 ];
 
+const printingTechniques = {
+    'Grabado en bajo relieve': 'GRABADO LÁSER',
+    'Grabado Láser': 'GRABADO LÁSER',
+    'Serigrafía': 'SERIGRAFÍA',
+    'Tampografía': 'SERIGRAFÍA',
+    'Punta Diamante': 'GRABADO LÁSER',
+    'Bordado': 'BORDADO',
+    'S/Metodo': '',
+    'Sublimación': 'SUBLIMACION',
+    'DTF': 'FULL COLOR',
+    'Gota de Resina': 'GOTA DE RESINA',
+    'Grabado CO2': 'GRABADO LÁSER',
+    'Impresión UV': 'FULL COLOR',
+    'Sand Blast': 'GRABADO LÁSER',
+}
+
 const quantitys = [
     100,
     500,
     1000
 ];
 
-module.exports = { categories, extraCategories, sizes, quantitys };
+module.exports = { categories, extraCategories, sizes, printingTechniques, quantitys };

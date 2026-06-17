@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { categoriesV2 } = require('./innova.constants');
+const { categoriesV2, surfaces, printingTechniques } = require('./innova.constants');
 const { buildHandle } = require('../handleParser');
 const {
     addCantidadOption,
@@ -7,6 +7,9 @@ const {
     getShopifyVariantKey,
     buildMediaFromUrls,
     mapShopMetafields,
+    buildClassificationMetafields,
+    filterMetafieldKeys,
+    joinComma,
 } = require('./_shared');
 
 async function fetchPage(vendor, page) {
@@ -137,9 +140,24 @@ function getCategories(prod) {
     return tags;
 }
 
+// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
+// ciclo normal del watcher.
+function buildMetafieldsForUpdate(normalized, ctx, keys) {
+    const prod = normalized.raw;
+    const materialRaw = (prod.Materiales || []).join(', ');
+    const logical = buildClassificationMetafields({
+        material: surfaces[materialRaw] || '',
+        materialFront: materialRaw,
+        tecnicas: [...new Set((prod.TecnicasImpresion || []).map(t => printingTechniques[t] || '').filter(Boolean))].join('-'),
+        tecnicasFront: joinComma(prod.TecnicasImpresion || []),
+    });
+    return mapShopMetafields(filterMetafieldKeys(logical, keys), ctx.shop);
+}
+
 function buildProductInput(normalized, ctx) {
     const { shop, vendor } = ctx;
     const prod = normalized.raw;
+    const materialRaw = (prod.Materiales || []).join(', ');
     const tags = getCategories(prod);
 
     const base = {
@@ -149,10 +167,11 @@ function buildProductInput(normalized, ctx) {
         vendor: vendor.name,
         tags,
         metafields: mapShopMetafields([
-            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: (prod.Materiales || []).join(', ') },
+            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: surfaces[materialRaw] || '' },
+            { key: 'material_front', namespace: 'custom', type: 'single_line_text_field', value: materialRaw },
             { key: 'medidas', namespace: 'custom', type: 'single_line_text_field', value: prod['Medidas producto'] || '' },
-            { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: (prod.TecnicasImpresion || []).join(', ') },
-            { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field', value: (prod.TecnicasImpresion || []).join('/-/') },
+            { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: [...new Set((prod.TecnicasImpresion || []).map(t => printingTechniques[t] || '').filter(Boolean))].join('-') },
+            { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field', value: joinComma(prod.TecnicasImpresion || []) },
             { key: 'area_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: prod.AreaDeImpresion || '' },
             { key: 'peso', namespace: 'custom', type: 'single_line_text_field', value: prod.PesoProducto || '' },
             { key: 'peso_de_caja', namespace: 'custom', type: 'single_line_text_field', value: prod.EmpaqueMaster[0].Peso || '' },
@@ -212,6 +231,7 @@ async function uploadNewProduct(normalized, ctx) {
 module.exports = {
     fetchCatalog,
     buildProductInput,
+    buildMetafieldsForUpdate,
     expandVariantsForUpload,
     uploadNewProduct,
     buildAllMedia: (n, ctx) => buildAndUploadMedia(n.raw, ctx),

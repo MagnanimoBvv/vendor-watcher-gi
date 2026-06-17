@@ -15,6 +15,7 @@ function makeReport() {
                 tagsAgregados: 0,
                 tagsRetirados: 0,
                 ventanasExpiradas: 0,
+                metafieldsActualizados: 0,
             },
             errors: [],
         };

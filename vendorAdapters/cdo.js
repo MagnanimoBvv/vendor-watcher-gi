@@ -1,7 +1,7 @@
 const axios = require('axios');
-const { icons, categories, bebidasRules, normalizedSurfaces, normalizedPrintingTechniques } = require('./cdo.constants');
+const { icons, categories, bebidasRules, normalizedSurfaces, surfaceKeywords, normalizedPrintingTechniques } = require('./cdo.constants');
 const { buildHandle } = require('../handleParser');
-const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields } = require('./_shared');
+const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields, buildClassificationMetafields, filterMetafieldKeys, joinComma } = require('./_shared');
 
 async function fetchCatalog({ vendor }) {
     const r = await axios.get(vendor.endpoint, { params: { auth_token: process.env.CDO_AUTH_TOKEN } });
@@ -32,6 +32,46 @@ async function fetchCatalog({ vendor }) {
 
 function normalize(text) {
     return String(text || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+
+// Clasifica un texto de material a su categoría normalizada. 1) match exacto
+// contra normalizedSurfaces (conserva las decisiones ya curadas a mano); 2) si no,
+// keywords por posición (ver surfaceKeywords). Devuelve null si no hay señal.
+function classifySurface(text) {
+    if (!text) return null;
+    const exact = normalizedSurfaces[String(text).trim()];
+    if (exact) return exact;
+    const t = normalize(text);
+    let best = null, bestIdx = Infinity, bestPrio = Infinity;
+    surfaceKeywords.forEach(([cat, regexes], prio) => {
+        for (const r of regexes) {
+            const m = t.match(r);
+            if (m && (m.index < bestIdx || (m.index === bestIdx && prio < bestPrio))) {
+                best = cat; bestIdx = m.index; bestPrio = prio;
+            }
+        }
+    });
+    return best;
+}
+
+// Obtiene el texto crudo de material desde la descripción de CDO. CDO no expone un
+// campo de material: 1) si hay etiqueta "Materiales:" se usa esa línea; 2) si no,
+// se toma la PRIMERA oración que parezca un material (muchos productos arrancan con
+// "Plástico.", "Bambú.", o traen "Non-woven."/"Poliéster 600D." tras las medidas).
+// Devuelve '' si no hay ninguna señal de material.
+function extractMaterialText(description) {
+    const labelled = String(description || '').match(/Materiales?\s*:\s*(.*?)(?:\r\n|\n|$)/i);
+    if (labelled) return labelled[1].trim();
+    const sentences = String(description || '').split(/[.\r\n]+/).map(s => s.trim()).filter(Boolean);
+    for (const s of sentences) {
+        if (classifySurface(s)) return s;
+    }
+    return '';
+}
+
+// Material normalizado para los metafields. '' sólo si no hay ninguna señal.
+function getNormalizedSurface(description) {
+    return classifySurface(extractMaterialText(description)) || '';
 }
 
 function matchRule(text) {
@@ -109,12 +149,24 @@ function getNormalizedPrintingTechniques(printingTechs) {
     return [...new Set((printingTechs || []).map(t => normalizedPrintingTechniques[t] || ''))].filter(Boolean).join('-');
 }
 
+// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
+// ciclo normal del watcher.
+function buildMetafieldsForUpdate(normalized, ctx, keys) {
+    const prod = normalized.raw;
+    const printingTechs = (prod.icons || []).filter(i => (icons || []).includes(i.label)).map(i => i.label);
+    const logical = buildClassificationMetafields({
+        material: getNormalizedSurface(prod.description),
+        materialFront: extractMaterialText(prod.description),
+        tecnicas: getNormalizedPrintingTechniques(printingTechs),
+        tecnicasFront: joinComma(printingTechs),
+    });
+    return mapShopMetafields(filterMetafieldKeys(logical, keys), ctx.shop);
+}
+
 function buildProductInput(normalized, ctx) {
     const { shop, vendor } = ctx;
     const prod = normalized.raw;
     const printingTechs = (prod.icons || []).filter(i => (icons || []).includes(i.label)).map(i => i.label);
-    const matMatch = (prod.description || '').match(/Materiales:\s*(.*?)(?:\r\n|$)/);
-    const surface = matMatch ? normalizedSurfaces[matMatch[1].trim()] : 'S/Material';
 
     const base = {
         handle: buildHandle(shop, vendor, normalized.code, normalized.name),
@@ -123,10 +175,10 @@ function buildProductInput(normalized, ctx) {
         vendor: vendor.name,
         tags: getCategories(prod),
         metafields: mapShopMetafields([
-            // { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: surface || 'S/Material' },
-            // { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: getNormalizedPrintingTechniques(printingTechs) },
-            { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: printingTechs.join(', ') },
-            { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field', value: printingTechs.join('/-/') },
+            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: getNormalizedSurface(prod.description) },
+            { key: 'material_front', namespace: 'custom', type: 'single_line_text_field', value: extractMaterialText(prod.description) },
+            { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: getNormalizedPrintingTechniques(printingTechs) },
+            { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field', value: joinComma(printingTechs) },
             ...(prod.packing && prod.packing.width ? [{
                 key: 'peso', namespace: 'custom', type: 'single_line_text_field', value: `${(parseFloat(prod.packing.weight) / prod.packing.quantity).toFixed(2)} kg`,
                 key: 'peso_de_caja', namespace: 'custom', type: 'single_line_text_field', value: `${prod.packing.weight} kg`,
@@ -221,6 +273,7 @@ async function uploadNewProduct(normalized, ctx) {
 module.exports = {
     fetchCatalog,
     buildProductInput,
+    buildMetafieldsForUpdate,
     expandVariantsForUpload,
     uploadNewProduct,
     buildAllMedia: (n) => buildMedia(n.raw),

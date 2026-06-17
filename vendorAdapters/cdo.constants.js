@@ -261,6 +261,21 @@ const normalizedSurfaces = {
     'Poliéster 190T, metal y plástico engomado.': 'TEXTIL',
 };
 
+// Clasificación de material por palabras clave: fallback cuando el texto del
+// material NO está exacto en normalizedSurfaces. Se evalúa POR POSICIÓN: gana la
+// categoría cuyo keyword aparezca PRIMERO en el texto (refleja "el material
+// principal va listado primero"); los empates se rompen por el orden de esta
+// lista (de específico a genérico). El texto se compara normalizado (minúsculas
+// y sin acentos), por eso los patrones van sin acentos.
+const surfaceKeywords = [
+    ['VIDRIO',   [/vidrio/, /borosilicato/, /\bk9\b/, /\bcristal\b/]],
+    ['CERAMICA', [/ceramica/, /porcelana/, /\bgres\b/]],
+    ['MADERA',   [/bambu/, /bamboo/, /madera/, /corcho/, /carton/, /kraft/, /papel/, /\bmdf\b/, /\bpino\b/, /trigo/]],
+    ['TEXTIL',   [/poliester/, /polyester/, /algodon/, /\btela\b/, /nylon/, /lona/, /ripstop/, /fieltro/, /jacquard/, /oxford/, /elastano/, /\brpet\b/, /forro/, /gucci/, /wulong/, /taslon/, /pongee/, /\blino\b/, /lienzo/, /felpa/, /neopren/, /poliamida/, /spandex/, /microfibra/, /\bpeva\b/, /franela/, /non[ -]?woven/, /\bwoven\b/, /yute/, /canvas/]],
+    ['METAL',    [/acero/, /aluminio/, /hierro/, /\bzinc\b/, /cobre/, /aleacion/, /metal/, /metalic/, /\blata\b/, /peltre/, /estano/, /laton/, /inoxidable/]],
+    ['PLÁSTICO', [/plastic/, /\babs\b/, /\bpet\b/, /polipropileno/, /poliestireno/, /policarbonato/, /\bpvc\b/, /\btpe\b/, /\btpu\b/, /silicon/, /acrilic/, /\beva\b/, /\bgoma\b/, /resina/, /melamina/, /\bsan\b/, /poliuretano/, /caucho/, /polietileno/]],
+];
+
 const normalizedPrintingTechniques = {
     'Tampografía': 'SERIGRAFÍA',
     'Serigrafía': 'SERIGRAFÍA',
@@ -298,4 +313,4 @@ const quantitys = [
     1000,
 ];
 
-module.exports = { icons, categories, bebidasRules, normalizedSurfaces, normalizedPrintingTechniques, quantitys };
+module.exports = { icons, categories, bebidasRules, normalizedSurfaces, surfaceKeywords, normalizedPrintingTechniques, quantitys };

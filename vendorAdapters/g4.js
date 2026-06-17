@@ -2,7 +2,7 @@ const axios = require('axios');
 const xml2js = require('xml2js');
 const { skipAdventages, ecoAdventages, categories, extraCategories, normalizedSurfaces, normalizedPrintingTechniques } = require('./g4.constants');
 const { buildHandle } = require('../handleParser');
-const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields } = require('./_shared');
+const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields, buildClassificationMetafields, filterMetafieldKeys, joinComma } = require('./_shared');
 
 function soapEnvelope(method, urn) {
     return `<?xml version="1.0" encoding="ISO-8859-1"?>
@@ -143,6 +143,19 @@ function getCategories(p) {
     return (categories[cat] || '') + extra;
 }
 
+// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
+// ciclo normal del watcher.
+function buildMetafieldsForUpdate(normalized, ctx, keys) {
+    const head = normalized.raw.head;
+    const logical = buildClassificationMetafields({
+        material: normalizedSurfaces[head.material] || '',
+        materialFront: head.material || '',
+        tecnicas: normalizedPrintingTechniques[head.impresion] || '',
+        tecnicasFront: joinComma(head.impresion || ''),
+    });
+    return mapShopMetafields(filterMetafieldKeys(logical, keys), ctx.shop);
+}
+
 function buildProductInput(normalized, ctx) {
     const { shop, vendor } = ctx;
     const head = normalized.raw.head;
@@ -153,12 +166,11 @@ function buildProductInput(normalized, ctx) {
         vendor: vendor.name,
         tags: getCategories(head),
         metafields: mapShopMetafields([
-            // { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: normalizedSurfaces[head.material] || head.material || '' },
-            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: head.material || '' },
+            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: normalizedSurfaces[head.material] || '' },
+            { key: 'material_front', namespace: 'custom', type: 'single_line_text_field', value: head.material || '' },
             { key: 'medidas', namespace: 'custom', type: 'single_line_text_field', value: head.medidas || '' },
-            // { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: normalizedPrintingTechniques[head.impresion] || head.impresion || '' },
-            { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: head.impresion || '' },
-            { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field', value: head.impresion || '' },
+            { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: normalizedPrintingTechniques[head.impresion] || '' },
+            { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field', value: joinComma(head.impresion || '') },
             { key: 'capacidad', namespace: 'custom', type: 'single_line_text_field', value: head.capacidad_litros || '' },
             { key: 'area_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: head.area_impresion || '' },
             { key: 'peso', namespace: 'custom', type: 'single_line_text_field', value: head.peso_producto || '' },
@@ -237,6 +249,7 @@ async function uploadNewProduct(normalized, ctx) {
 module.exports = {
     fetchCatalog,
     buildProductInput,
+    buildMetafieldsForUpdate,
     expandVariantsForUpload,
     uploadNewProduct,
     buildAllMedia: (n) => buildMedia(n.raw.group),

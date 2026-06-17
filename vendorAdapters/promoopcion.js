@@ -1,7 +1,7 @@
 const axios = require('axios');
-const { categories, ecoCategories, printingTechniquesFront } = require('./promoopcion.constants');
+const { categories, ecoCategories, printingTechniquesFront, surfaces, printingTechniques } = require('./promoopcion.constants');
 const { buildHandle } = require('../handleParser');
-const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields } = require('./_shared');
+const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields, buildClassificationMetafields, filterMetafieldKeys, joinComma } = require('./_shared');
 
 async function fetchAllProducts(vendor) {
     const r = await axios.post(vendor.endpoint, JSON.stringify({
@@ -80,9 +80,34 @@ function getPrintingTechniquesFront(techniques) {
     return isMulti ? arr.join('*-*') : arr.join('/-/');
 }
 
+// Técnicas normalizadas: el mapa `printingTechniques` está keyeado por la frase
+// completa tal cual viene del ws; si no existe esa clave, se cae a partir por '/'
+// y normalizar cada segmento (dedupe, join '-').
+function getNormalizedPrintingTechniques(raw) {
+    const s = String(raw || '').trim();
+    if (!s) return '';
+    if (printingTechniques[s]) return printingTechniques[s];
+    return [...new Set(s.split('/').map(t => printingTechniques[t.trim()] || '').filter(Boolean))].join('-');
+}
+
+// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
+// ciclo normal del watcher.
+function buildMetafieldsForUpdate(normalized, ctx, keys) {
+    const prod = normalized.raw.prod;
+    const rawTech = (prod.impresion && prod.impresion.tecnicaImpresion) || '';
+    const logical = buildClassificationMetafields({
+        material: surfaces[prod.material] || '',
+        materialFront: prod.material || '',
+        tecnicas: getNormalizedPrintingTechniques(rawTech),
+        tecnicasFront: joinComma(rawTech, '/'),
+    });
+    return mapShopMetafields(filterMetafieldKeys(logical, keys), ctx.shop);
+}
+
 function buildProductInput(normalized, ctx) {
     const { shop, vendor } = ctx;
     const prod = normalized.raw.prod;
+    const rawTech = (prod.impresion && prod.impresion.tecnicaImpresion) || '';
     const replaceString = 'Este producto por ser últimas piezas puede presentar alguna variación, no se aceptan devoluciones.';
     const hasSize = productHasSize(prod);
 
@@ -93,10 +118,11 @@ function buildProductInput(normalized, ctx) {
         vendor: vendor.name,
         tags: getCategories(prod),
         metafields: mapShopMetafields([
-            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: prod.material || '' },
+            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: surfaces[prod.material] || '' },
+            { key: 'material_front', namespace: 'custom', type: 'single_line_text_field', value: prod.material || '' },
             { key: 'medidas', namespace: 'custom', type: 'single_line_text_field', value: prod.medidas || '' },
-            { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: (prod.impresion && prod.impresion.tecnicaImpresion) || '' },
-            { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field', value: getPrintingTechniquesFront(prod.impresion && prod.impresion.tecnicaImpresion) },
+            { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: getNormalizedPrintingTechniques(rawTech) },
+            { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field', value: joinComma(rawTech, '/') },
             { key: 'capacidad', namespace: 'custom', type: 'single_line_text_field', value: prod.capacidad || '' },
             { key: 'area_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: (prod.impresion && prod.impresion.areaImpresion) || '' },
             { key: 'peso', namespace: 'custom', type: 'single_line_text_field', value: prod.paquete && prod.paquete.pesoNeto && prod.paquete.PiezasCaja ? `${(prod.paquete.pesoNeto / parseInt(prod.paquete.PiezasCaja, 10)).toFixed(2)} kg` : '', },
@@ -179,6 +205,7 @@ async function uploadNewProduct(normalized, ctx) {
 module.exports = {
     fetchCatalog,
     buildProductInput,
+    buildMetafieldsForUpdate,
     expandVariantsForUpload,
     uploadNewProduct,
     buildAllMedia: (n) => buildMedia(n.raw.prod),

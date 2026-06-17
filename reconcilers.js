@@ -348,10 +348,48 @@ async function reconcileVariants(vendorProducts, shopifyByCode, ctx) {
     }
 }
 
+// Actualización puntual de metafields. NO forma parte del ciclo normal del
+// watcher: se dispara explícitamente con `--update-metafields` (ver index.js /
+// runner.js), pensada para correr en ocasiones especiales. Recalcula los
+// metafields de clasificación (material, material_front, tecnicas_de_impresion,
+// tecnicas_de_impresion_front) de los productos que YA existen en Shopify y los
+// sobreescribe; nunca crea, descontinúa ni toca precios/variantes/tags.
+//
+// `ctx.metafieldKeys` (opcional) restringe qué keys lógicas se escriben; si es
+// null se escriben todas las que el adapter sepa construir. El conjunto de keys
+// es extensible: para una futura actualización basta con que el adapter agregue
+// más entradas en su buildMetafieldsForUpdate.
+async function reconcileMetafields(vendorProducts, shopifyByCode, ctx) {
+    const adapter = ctx.adapter;
+    if (typeof adapter.buildMetafieldsForUpdate !== 'function') {
+        ctx.report.logError(ctx.entry, 'metafields', new Error(`Adapter ${ctx.vendor.adapter} no implementa buildMetafieldsForUpdate`));
+        return;
+    }
+
+    for (const v of vendorProducts) {
+        const shopifyProduct = shopifyByCode.get(v.code);
+        if (!shopifyProduct) continue; // sólo se actualizan productos existentes
+
+        try {
+            const metafields = adapter.buildMetafieldsForUpdate(v, ctx, ctx.metafieldKeys)
+                // No se sobreescribe con vacío para no borrar datos buenos ya cargados.
+                .filter(m => m && m.value !== '' && m.value != null)
+                .map(m => ({ ...m, ownerId: shopifyProduct.id }));
+            if (metafields.length === 0) continue;
+
+            await ctx.shopifyFns.setMetafields(metafields);
+            ctx.entry.counters.metafieldsActualizados += metafields.length;
+        } catch (err) {
+            ctx.report.logError(ctx.entry, `metafields ${v.code}`, err);
+        }
+    }
+}
+
 module.exports = {
     expireTagWindows,
     reconcileNewProducts,
     reconcileDiscontinued,
     reconcilePricing,
     reconcileVariants,
+    reconcileMetafields,
 };

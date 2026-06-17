@@ -1,6 +1,6 @@
 const axios = require('axios');
 const sharp = require('sharp');
-const { categories, extraCategories, sizes } = require('./4promo.constants');
+const { categories, extraCategories, sizes, printingTechniques } = require('./4promo.constants');
 const { buildHandle } = require('../handleParser');
 const {
     addCantidadOption,
@@ -8,6 +8,9 @@ const {
     getShopifyVariantKey,
     mapShopMetafields,
     isEscalas,
+    buildClassificationMetafields,
+    filterMetafieldKeys,
+    joinComma,
 } = require('./_shared');
 
 async function fetchCatalog({ vendor }) {
@@ -61,6 +64,18 @@ function productHasSize(group) {
     return group.some(v => sizes.includes(v.color));
 }
 
+// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
+// ciclo normal del watcher. 4Promo no expone material ni mapa de normalización
+// de técnicas; sólo se refresca el front (crudo, con coma).
+function buildMetafieldsForUpdate(normalized, ctx, keys) {
+    const head = normalized.raw.head;
+    const logical = buildClassificationMetafields({
+        tecnicas: [...new Set((head.metodos_impresion.split('-') || []).map(t => printingTechniques[t] || '').filter(Boolean))].join('-'),
+        tecnicasFront: joinComma(head.metodos_impresion || '', '-'),
+    });
+    return mapShopMetafields(filterMetafieldKeys(logical, keys), ctx.shop);
+}
+
 function buildProductInput(normalized, ctx) {
     const { shop, vendor } = ctx;
     const head = normalized.raw.head;
@@ -78,9 +93,9 @@ function buildProductInput(normalized, ctx) {
             { key: 'medidas', namespace: 'custom', type: 'single_line_text_field',
               value: `${head.medida_producto_alto} x ${head.medida_producto_ancho} x ${head.profundidad_articulo} cm` },
             { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field',
-              value: (head.metodos_impresion || '').split('-').join(', ') },
+              value: [...new Set((head.metodos_impresion.split('-') || []).map(t => printingTechniques[t] || '').filter(Boolean))].join('-') },
             { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field',
-              value: (head.metodos_impresion || '').split('-').join('/-/') },
+              value: joinComma(head.metodos_impresion || '', '-') },
             { key: 'capacidad', namespace: 'custom', type: 'single_line_text_field',
               value: head.capacidad || '' },
             { key: 'area_de_impresion', namespace: 'custom', type: 'single_line_text_field',
@@ -187,6 +202,7 @@ function buildVariantPayloadForExisting(expandedVariant) {
 module.exports = {
     fetchCatalog,
     buildProductInput,
+    buildMetafieldsForUpdate,
     expandVariantsForUpload,
     uploadNewProduct,
     buildAllMedia: (n, ctx) => buildAndUploadMedia(n.raw.group, ctx),

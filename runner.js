@@ -9,6 +9,7 @@ const {
     reconcileDiscontinued,
     reconcilePricing,
     reconcileVariants,
+    reconcileMetafields,
 } = require('./reconcilers');
 
 async function runShopVendor(shop, vendor, opts, report) {
@@ -56,6 +57,24 @@ async function runShopVendor(shop, vendor, opts, report) {
     }
     console.log(`  cruzados por handle: ${shopifyByCode.size}`);
 
+    const ctx = {
+        shop,
+        vendor,
+        adapter,
+        shopifyFns,
+        report,
+        entry,
+        metafieldKeys: opts.metafieldKeys || null,
+    };
+
+    // Modo especial: sólo recalcula metafields y termina. NO corre nada del ciclo
+    // normal (tags, descontinuación, nuevos, variantes, precios) ni necesita
+    // ubicación/publicaciones.
+    if (opts.updateMetafields) {
+        await reconcileMetafields(vendorProducts, shopifyByCode, ctx);
+        return;
+    }
+
     let locationId, publications;
     try {
         locationId = await shopifyFns.getLocationId();
@@ -65,17 +84,9 @@ async function runShopVendor(shop, vendor, opts, report) {
         return;
     }
 
-    const ctx = {
-        shop,
-        vendor,
-        adapter,
-        shopifyFns,
-        locationId,
-        publications,
-        report,
-        entry,
-        computeTargetPrice: (raw, rawVariant) => computeTargetPrice(raw, shop, vendor, rawVariant),
-    };
+    ctx.locationId = locationId;
+    ctx.publications = publications;
+    ctx.computeTargetPrice = (raw, rawVariant) => computeTargetPrice(raw, shop, vendor, rawVariant);
 
     await expireTagWindows(shopifyProducts, ctx);
     await reconcileDiscontinued(vendorProducts, shopifyByCode, ctx);
