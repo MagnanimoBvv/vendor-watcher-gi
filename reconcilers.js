@@ -98,6 +98,7 @@ async function reconcileNewProducts(vendorProducts, shopifyByCode, ctx) {
                 }
                 const created = await adapter.uploadNewProduct(v, ctx);
                 ctx.entry.counters.nuevos++;
+                // continue; // Descomentar para subir artículos por primera vez
                 if (created && created.id) {
                     await ctx.shopifyFns.tagsAdd(created.id, ['nuevo']);
                     await ctx.shopifyFns.setMetafields([

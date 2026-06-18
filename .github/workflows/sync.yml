@@ -30,8 +30,6 @@ jobs:
             vendor: 4p
           - shop: hhg
             vendor: in
-          - shop: hhg
-            vendor: il
     steps:
       - uses: actions/checkout@v4
 

@@ -14,7 +14,7 @@ async function fetchCatalog({ vendor }) {
         isNewExplicit: prod.tipo === 'nuevo',
         isDiscontinuedExplicit: null,
         isOnOfferExplicit: null,
-        variants: (prod.skus || []).map(v => ({
+        variants: (prod.skus || []).filter((v, i, arr) => arr.findIndex(x => x.sku === v.sku) === i).map(v => ({
             sku: v.sku,
             key: v.color,
             name: v.color,
@@ -98,7 +98,8 @@ function buildProductInput(normalized, ctx) {
 function buildMedia(prod) {
     const principal = prod.imagen_principal;
     const productMedia = principal ? [{ mediaContentType: 'IMAGE', originalSource: principal }] : [];
-    const variantMedia = (prod.skus || []).flatMap(v => (v.imagenes || [])
+    const variantMedia = (prod.skus || []).filter((v, i, arr) => arr.findIndex(x => x.sku === v.sku) === i)
+        .flatMap(v => (v.imagenes || [])
         .filter(src => src !== principal)
         .map((src, i) => ({ alt: i === 0 ? v.color : '', mediaContentType: 'IMAGE', originalSource: src })));
     return [...productMedia, ...variantMedia];
@@ -126,7 +127,7 @@ function expandVariantsForUpload(normalized, ctx, productResponse) {
     const productMediaNodes = productResponse && productResponse.media && productResponse.media.nodes;
     const colorCount = {};
     const out = [];
-    for (const v of normalized.raw.skus || []) {
+    for (const v of (normalized.raw.skus || []).filter((v, i, arr) => arr.findIndex(x => x.sku === v.sku) === i)) {
         const base = buildBaseVariantPayload(v, productMediaNodes, ctx, normalized.raw, colorCount);
         out.push(...expandVariantForShopify(base, ctx.shop));
     }
