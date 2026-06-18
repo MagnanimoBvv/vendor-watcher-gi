@@ -23,21 +23,15 @@ jobs:
       fail-fast: false
       max-parallel: 3
       matrix:
-        shop: [gi]
+        shop: [gi, hhg]
         vendor: [4p, in, po, g4, cdo, il]
         exclude:
-          - shop: hhglobal
-            vendor: g4
-          - shop: hhglobal
-            vendor: dv
-          - shop: hhglobal
-            vendor: cdo
-          - shop: hhglobal
-            vendor: pr
-          - shop: hhglobal
+          - shop: hhg
+            vendor: 4p
+          - shop: hhg
+            vendor: in
+          - shop: hhg
             vendor: il
-          - shop: hhglobal
-            vendor: dk
     steps:
       - uses: actions/checkout@v4
 
@@ -53,10 +47,10 @@ jobs:
           # GRAPHQL_URL_LINK:       ${{ secrets.GRAPHQL_URL_LINK }}
           SHOPIFY_TOKEN_GI:       ${{ secrets.SHOPIFY_TOKEN_GI }}
           GRAPHQL_URL_GI:         ${{ secrets.GRAPHQL_URL_GI }}
-          # SHOPIFY_TOKEN_HHGLOBAL: ${{ secrets.SHOPIFY_TOKEN_HHGLOBAL }}
-          # GRAPHQL_URL_HHGLOBAL:   ${{ secrets.GRAPHQL_URL_HHGLOBAL }}
-          # SHOPIFY_TOKEN_GNP:      ${{ secrets.SHOPIFY_TOKEN_GNP }}
-          # GRAPHQL_URL_GNP:        ${{ secrets.GRAPHQL_URL_GNP }}
+          SHOPIFY_TOKEN_HHG:      ${{ secrets.SHOPIFY_TOKEN_HHG }}
+          GRAPHQL_URL_HHG:        ${{ secrets.GRAPHQL_URL_HHG }}
+          SHOPIFY_TOKEN_PSP:      ${{ secrets.SHOPIFY_TOKEN_PSP }}
+          GRAPHQL_URL_PSP:        ${{ secrets.GRAPHQL_URL_PSP }}
 
           INNOVA_USER:            ${{ secrets.INNOVA_USER }}
           INNOVA_PASS:            ${{ secrets.INNOVA_PASS }}

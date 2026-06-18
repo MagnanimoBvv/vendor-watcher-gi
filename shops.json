@@ -70,28 +70,21 @@
     }
   },
   {
-    "shop": "hhglobal",
-    "domain": "hhglobal.myshopify.com",
-    "tokenEnv": "SHOPIFY_TOKEN_HHGLOBAL",
-    "graphqlUrlEnv": "GRAPHQL_URL_HHGLOBAL",
+    "shop": "psp",
+    "domain": "ps-promocionales.myshopify.com",
+    "tokenEnv": "SHOPIFY_TOKEN_PSP",
+    "graphqlUrlEnv": "GRAPHQL_URL_PSP",
     "handleFormat": "standard",
-    "productFormat": "escalas",
-    "scales": [100, 500, 1000],
+    "productFormat": "simple",
     "vendors": ["4p", "in", "po"],
     "priceDivisor": {
-      "default": 0.75
+      "default": 0.56
     },
     "metafields": {
       "material": "superficie",
       "medidas": "medidas",
       "tecnicas_de_impresion": "tecnicas_de_impresion",
-      "tecnicas_de_impresion_front": "tecnicas_de_impresion_front",
-      "capacidad": "capacidad",
-      "area_de_impresion": "area_de_impresion",
-      "peso": "peso",
-      "peso_de_caja": "peso_de_caja",
-      "medidas_de_caja": "medidas_de_caja",
-      "piezas_por_caja": "piezas_por_caja"
+      "piezas_por_caja": "piezas_caja"
     },
     "vendorNameToAbbr": {
       "4Promo": "4p",
@@ -100,25 +93,32 @@
     }
   },
   {
-    "shop": "gnp",
-    "domain": "gnp.myshopify.com",
-    "tokenEnv": "SHOPIFY_TOKEN_GNP",
-    "graphqlUrlEnv": "GRAPHQL_URL_GNP",
-    "handleFormat": "legacy",
+    "shop": "hhg",
+    "domain": "gi-hh-global.myshopify.com",
+    "tokenEnv": "SHOPIFY_TOKEN_HHG",
+    "graphqlUrlEnv": "GRAPHQL_URL_HHG",
+    "handleFormat": "standard",
     "productFormat": "simple",
-    "vendors": ["4p", "po"],
+    "vendors": ["4p", "in", "po", "g4", "dv", "cdo", "pr", "il", "dk"],
     "priceDivisor": {
-      "default": 0.75
+      "default": 0.67
     },
     "metafields": {
-      "material": "material",
+      "material": "superficie",
       "medidas": "medidas",
       "tecnicas_de_impresion": "tecnicas_de_impresion",
-      "piezas_por_caja": "piezas_por_caja"
+      "piezas_por_caja": "piezas_caja"
     },
     "vendorNameToAbbr": {
       "4Promo": "4p",
-      "PromoOpcion": "po"
+      "Innova": "in",
+      "PromoOpcion": "po",
+      "G4": "g4",
+      "Doble Vela": "dv",
+      "CDO": "cdo",
+      "Preslow": "pr",
+      "Impressline": "il",
+      "DKPS": "dk"
     }
   }
 ]
