@@ -1,16 +1,17 @@
 const axios = require('axios');
-const { categories, extraCategories, normalizedSurfaces, normalizedPrintingTechniques, warehouses } = require('./doblevela.constants');
+const { categories, extraCategories, printingTechniques, normalizedSurfaces, normalizedPrintingTechniques, warehouses } = require('./doblevela.constants');
 const { buildHandle } = require('../handleParser');
-const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields } = require('./_shared');
+const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields, buildClassificationMetafields, filterMetafieldKeys, joinComma } = require('./_shared');
 
 async function fetchCatalog({ vendor }) {
     const r = await axios.get(vendor.endpoint, { params: { Key: process.env.DV_KEY } });
     const m = String(r.data).match(/<string[^>]*>(.*)<\/string>/s);
-    const list = m ? JSON.parse(m[1]) : [];
+    const list = m ? JSON.parse(m[1]).Resultado : [];
 
     const byModel = new Map();
     for (const p of list) {
         const k = p.MODELO;
+        if (p.Status === 'X') continue;
         if (!byModel.has(k)) byModel.set(k, []);
         byModel.get(k).push(p);
     }
@@ -22,7 +23,7 @@ async function fetchCatalog({ vendor }) {
         // Doble Vela marca OFERTA con '%' en Status (no es señal de descontinuado).
         const isOnOffer = String(head.Status || '').includes('%');
         out.push({
-            code: String(modelo),
+            code: String(modelo).toLowerCase().replace(/[\s]+/g, '-'),
             name: head.NOMBRE,
             rawPrice: Number(head.Price),
             isNewExplicit: isNew,
@@ -58,17 +59,32 @@ function getCategories(prod) {
     extra += String(prod.Status || '').includes('%') ? ',oferta' : '';
     if (prod.SubFamilia === 'TAZAS Y TERMOS') {
         const fw = (prod.Descripcion || '').split(' ')[0];
-        extra += extraCategories[`${fw}`] || '';
+        extra += extraCategories[`${fw}`];
     }
     const cs = `${prod.Familia} - ${prod.SubFamilia}`;
-    if ((prod.Descripcion || '').includes('ecológic')) extra += extraCategories[cs] || '';
+    if ((prod.Descripcion || '').includes('ecológic')) extra += extraCategories[cs];
     if ((prod.NOMBRE || '').includes('SOCCER')) extra += ',mundial';
     return (categories[cs] || '') + extra;
+}
+
+// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
+// ciclo normal del watcher.
+function buildMetafieldsForUpdate(normalized, ctx, keys) {
+    const head = normalized.raw.head;
+    const materialRaw = (head.Material || '').replace(/\r/g, ' ');
+    const logical = buildClassificationMetafields({
+        material: normalizedSurfaces[materialRaw] || '',
+        materialFront: materialRaw,
+        tecnicas: getNormalizedPrintingTechniques(head['Tipo Impresion']),
+        tecnicasFront: joinComma((head['Tipo Impresion'] || '').split(' ').map(t => printingTechniques[t] || '')),
+    });
+    return mapShopMetafields(filterMetafieldKeys(logical, keys), ctx.shop);
 }
 
 function buildProductInput(normalized, ctx) {
     const { shop, vendor } = ctx;
     const head = normalized.raw.head;
+    const materialRaw = (head.Material || '').replace(/\r/g, ' ');
     const base = {
         handle: buildHandle(shop, vendor, normalized.code, normalized.name),
         title: `${(head.NOMBRE || '').slice(0, (head.NOMBRE || '').indexOf(head.MODELO) + (head.MODELO || '').length).trim().replace(/[.,]/g, '')}`,
@@ -76,9 +92,14 @@ function buildProductInput(normalized, ctx) {
         vendor: vendor.name,
         tags: getCategories(head),
         metafields: mapShopMetafields([
-            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: normalizedSurfaces[(head.Material || '').replace(/\r/g, ' ')] || (head.Material || '').replace(/\r/g, ' ') },
+            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: normalizedSurfaces[materialRaw] || '' },
+            { key: 'material_front', namespace: 'custom', type: 'single_line_text_field', value: materialRaw },
             { key: 'medidas', namespace: 'custom', type: 'single_line_text_field', value: (head['Medida Producto'] || '').replace(/\r/g, ' ') },
             { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: getNormalizedPrintingTechniques(head['Tipo Impresion']) },
+            { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field', value: joinComma((head['Tipo Impresion'] || '').split(' ').map(t => printingTechniques[t] || '')) },
+            { key: 'peso', namespace: 'custom', type: 'single_line_text_field', value: head['Peso Producto'] || '' },
+            { key: 'peso_de_caja', namespace: 'custom', type: 'single_line_text_field', value: head['Peso caja'] || '' },
+            { key: 'medidas_de_caja', namespace: 'custom', type: 'single_line_text_field', value: head['Medida Caja Master'] || '' },
             { key: 'piezas_por_caja', namespace: 'custom', type: 'single_line_text_field', value: String(head['Unidad Empaque'] || '') },
         ], shop),
         productOptions: [{ name: 'Color', values: [{ name: 'Default' }] }],
@@ -99,7 +120,7 @@ function buildMedia(group) {
             originalSource: `${baseUrl}large/${modelo}_${color.toLowerCase().replace(/\s/g, '')}_lrg.jpg`,
         });
     }
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= 12; i++) {
         media.push({ mediaContentType: 'IMAGE', originalSource: `${baseUrl}adicionales/_${modelo}_${i}.jpg` });
     }
     return media;
@@ -148,6 +169,7 @@ async function uploadNewProduct(normalized, ctx) {
 module.exports = {
     fetchCatalog,
     buildProductInput,
+    buildMetafieldsForUpdate,
     expandVariantsForUpload,
     uploadNewProduct,
     buildAllMedia: (n) => buildMedia(n.raw.group),

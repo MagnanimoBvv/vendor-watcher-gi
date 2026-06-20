@@ -24,12 +24,14 @@ jobs:
       max-parallel: 3
       matrix:
         shop: [gi, hhg, psp]
-        vendor: [4p, in, po, g4, cdo, il]
+        vendor: [4p, in, po, dv, g4, cdo, il]
         exclude:
           - shop: hhg
             vendor: in
           - shop: psp
             vendor: in
+          - shop: psp
+            vendor: dv
           - shop: psp
             vendor: g4
           - shop: psp
