@@ -4,7 +4,7 @@ const axios = require('axios');
 const FormData = require('form-data');
 const { categories, printingTechniques, normalizedSurfaces, normalizedPrintingTechniques, warehouses } = require('./dkps.constants');
 const { buildHandle } = require('../handleParser');
-const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields } = require('./_shared');
+const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields, buildClassificationMetafields, filterMetafieldKeys, joinComma } = require('./_shared');
 
 const PRODUCTS_URL = 'https://bfekkcapbvnilicqzpkr.supabase.co/functions/v1/api-rest/api/productos';
 const STOCKS_URL = 'https://bfekkcapbvnilicqzpkr.supabase.co/functions/v1/api-rest/api/productos/precios-existencias';
@@ -50,8 +50,6 @@ async function fetchCatalog({ vendor }) {
         if (!byModel.has(model)) byModel.set(model, []);
         byModel.get(model).push(p);
     }
-    // console.log(stockBySku);
-    // console.log(byModel);
 
     const out = [];
     for (const [model, group] of byModel) {
@@ -119,6 +117,23 @@ function getNormalizedPrintingTechs(arr) {
     return [...new Set((arr || []).map(t => normalizedPrintingTechniques[t] || ''))].filter(Boolean).join('-');
 }
 
+// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
+// ciclo normal del watcher.
+function buildMetafieldsForUpdate(normalized, ctx, keys) {
+    const head = normalized.raw.head;
+    const model = normalized.code;
+    const techs = getPrintingTechs(head, model);
+    const values = {
+        tecnicas: getNormalizedPrintingTechs(techs),
+        tecnicasFront: joinComma(techs),
+    };
+    if (head.materialProducto) {
+        values.material = normalizedSurfaces[head.materialProducto] || '';
+        values.materialFront = head.materialProducto ;
+    }
+    return mapShopMetafields(filterMetafieldKeys(buildClassificationMetafields(values), keys), ctx.shop);
+}
+
 function buildProductInput(normalized, ctx) {
     const { shop, vendor } = ctx;
     const head = normalized.raw.head;
@@ -134,12 +149,13 @@ function buildProductInput(normalized, ctx) {
         vendor: vendor.name,
         tags,
         metafields: mapShopMetafields([
-            // ...(head.materialProducto ? [{ key: 'material', namespace: 'custom', type: 'single_line_text_field', value: normalizedSurfaces[head.materialProducto] || head.materialProducto }] : []),
-            ...(head.materialProducto ? [{ key: 'material', namespace: 'custom', type: 'single_line_text_field', value: head.materialProducto }] : []),
+            ...(head.materialProducto ? [
+                { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: normalizedSurfaces[head.materialProducto] || '' },
+                { key: 'material_front', namespace: 'custom', type: 'single_line_text_field', value: head.materialProducto }
+            ] : []),
             ...(head.medidaProducto ? [{ key: 'medidas', namespace: 'custom', type: 'single_line_text_field', value: `${head.medidaProducto} cm` }] : []),
-            // { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: getNormalizedPrintingTechs(techs) },
-            { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: techs.join(', ') },
-            { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field', value: techs.join('/-/') },
+            { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: getNormalizedPrintingTechs(techs) },
+            { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field', value: joinComma(techs) },
             ...(head.capacidadProducto ? [{ key: 'capacidad', namespace: 'custom', type: 'single_line_text_field', value: head.capacidadProducto }] : []),
             ...(head.pesoCaja ? [
                 { key: 'peso', namespace: 'custom', type: 'single_line_text_field', value: `${(head.pesoCaja / head.piezasPorCaja).toFixed(2)} kg` },
@@ -178,7 +194,7 @@ async function buildMedia(group, ctx) {
                     return 0;
                 });
             sorted.forEach((img, i) => {
-                variantMedia.push({ alt: i === 0 ? color : '', mediaContentType: 'IMAGE', originalSource: img.url });
+                variantMedia.push({ alt: i === 0 ? color : img.nombreArchivo, mediaContentType: 'IMAGE', originalSource: img.url });
             });
         }
     }
@@ -190,7 +206,7 @@ async function buildMedia(group, ctx) {
         return true;
     });
 
-    const ficha = group[0] && group[0].fichaTecnica;
+    const ficha = group.map(g => g.fichaTecnica).find(f => f && f.url);
     if (ficha && ficha.url) {
         try {
             const url = await uploadTechnicalSpecs(ficha, ctx);
@@ -249,8 +265,8 @@ function expandVariantsForUpload(normalized, ctx, productResponse) {
     const productMediaNodes = productResponse && productResponse.media && productResponse.media.nodes;
     const hasSize = productHasSize(normalized.raw.group);
     const out = [];
-    for (const v of normalized.raw.group) {
-        const base = buildBaseVariantPayload(v, productMediaNodes, ctx, hasSize);
+    for (const v of normalized.variants) {
+        const base = buildBaseVariantPayload(v.raw, productMediaNodes, ctx, hasSize);
         out.push(...expandVariantForShopify(base, ctx.shop));
     }
     return out;
@@ -270,6 +286,7 @@ async function uploadNewProduct(normalized, ctx) {
 module.exports = {
     fetchCatalog,
     buildProductInput,
+    buildMetafieldsForUpdate,
     expandVariantsForUpload,
     uploadNewProduct,
     buildAllMedia: (n, ctx) => buildMedia(n.raw.group, ctx),

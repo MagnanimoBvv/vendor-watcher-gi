@@ -8,6 +8,7 @@ const categories = {
     'SUDADERAS': 'textil,chamarras y chalecos',
     'TERMOS': 'bebidas,termos',
     'CILINDROS': 'bebidas,cilindros de plastico',
+    'INTERNO': 'hogar,accesorios del hogar',
 }
 
 const printingTechniques = {
@@ -78,6 +79,7 @@ const printingTechniques = {
         'Sublimación (solo color blanco)', // No en 160, 170
     ],
     'CILINDROS': ['Serigrafía'],
+    'INTERNO': ['Sublibordado'],
 };
 
 const surfaces = [
@@ -128,7 +130,7 @@ const normalizedSurfaces = {
     '100% acrílico': 'TEXTIL',
     '50% Algodón 50% Poliester': 'TEXTIL',
     '50% Algodon 50% Poliester': 'TEXTIL',
-    'null': 'N/A',
+    'null': '',
     '87% Nylon 13% Spandex': 'TEXTIL',
     '80% Algodón 20% Poliéster': 'TEXTIL',
     '60% Poliester 32% Nylon 8% Spandex': 'TEXTIL',
