@@ -24,16 +24,16 @@ jobs:
       max-parallel: 1
       matrix:
         shop: [gi, hhg, psp]
-        vendor: [4p, in, po, dv, g4, cdo, il, dk]
+        vendor: [4p, po, in, dv, cdo, il, g4, dk]
         exclude:
           - shop: psp
             vendor: dv
           - shop: psp
-            vendor: g4
-          - shop: psp
             vendor: cdo
           - shop: psp
             vendor: il
+          - shop: psp
+            vendor: g4
           - shop: psp
             vendor: dk
     steps:
@@ -55,20 +55,21 @@ jobs:
           GRAPHQL_URL_HHG:        ${{ secrets.GRAPHQL_URL_HHG }}
           SHOPIFY_TOKEN_PSP:      ${{ secrets.SHOPIFY_TOKEN_PSP }}
           GRAPHQL_URL_PSP:        ${{ secrets.GRAPHQL_URL_PSP }}
-
+          
+          FP_AUTH_TOKEN:          ${{ secrets.FP_AUTH_TOKEN }}
+          PO_USER:                ${{ secrets.PO_USER }}
+          PO_PASS:                ${{ secrets.PO_PASS }}
           INNOVA_USER:            ${{ secrets.INNOVA_USER }}
           INNOVA_PASS:            ${{ secrets.INNOVA_PASS }}
           INNOVA_AUTH_TOKEN:      ${{ secrets.INNOVA_AUTH_TOKEN }}
-          PO_USER:                ${{ secrets.PO_USER }}
-          PO_PASS:                ${{ secrets.PO_PASS }}
-          G4_USER:                ${{ secrets.G4_USER }}
-          G4_KEY:                 ${{ secrets.G4_KEY }}
           DV_KEY:                 ${{ secrets.DV_KEY }}
           CDO_AUTH_TOKEN:         ${{ secrets.CDO_AUTH_TOKEN }}
-          PW_KEY:                 ${{ secrets.PW_KEY }}
           ILN_AUTH_TOKEN:         ${{ secrets.ILN_AUTH_TOKEN }}
+          G4_USER:                ${{ secrets.G4_USER }}
+          G4_KEY:                 ${{ secrets.G4_KEY }}
           DKPS_AUTH_TOKEN:        ${{ secrets.DKPS_AUTH_TOKEN }}
           DKPS_WEB_AUTH_TOKEN:    ${{ secrets.DKPS_WEB_AUTH_TOKEN }}
+          PW_KEY:                 ${{ secrets.PW_KEY }}
         run: |
           ARGS="--shop=${{ matrix.shop }} --vendor=${{ matrix.vendor }}"
           if [ "${{ github.event.inputs.dryRun }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi

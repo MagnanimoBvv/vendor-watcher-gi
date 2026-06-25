@@ -1,6 +1,5 @@
 const axios = require('axios');
-const sharp = require('sharp');
-const { categories, extraCategories, sizes, printingTechniques } = require('./4promo.constants');
+const { categories, extraCategories, sizes, printingTechniques, surfaces } = require('./4promo.constants');
 const { buildHandle } = require('../handleParser');
 const {
     addCantidadOption,
@@ -14,7 +13,7 @@ const {
 } = require('./_shared');
 
 async function fetchCatalog({ vendor }) {
-    const response = await axios.get(vendor.endpoint);
+    const response = await axios.get(vendor.endpoint, { headers: { 'Authorization': `Bearer ${process.env.FP_AUTH_TOKEN}` } });
     const rows = response.data;
 
     const byModel = new Map();
@@ -31,16 +30,16 @@ async function fetchCatalog({ vendor }) {
         const isOnOfferExplicit = head.producto_promocion === 'SI';
         products.push({
             code: String(code).toLowerCase().replace(/[\s]+/g, '-'),
-            name: head.nombre_articulo,
-            rawPrice: Number(head.precio),
+            name: head.nombre_artd,
+            rawPrice: Number(head.precio_desc),
             isNewExplicit,
             isDiscontinuedExplicit: null,
             isOnOfferExplicit,
             variants: group.map(v => ({
-                sku: `${v.id_articulo} ${v.color}`,
-                key: v.color,
-                name: v.color,
-                rawPrice: Number(v.precio),
+                sku: `${v.id_articulo} ${v.modelo}`,
+                key: v.modelo,
+                name: v.modelo,
+                rawPrice: Number(v.precio_desc),
                 available: Number(v.inventario) > 0,
                 raw: v,
             })),
@@ -61,15 +60,17 @@ function getCategoryTags(head) {
 }
 
 function productHasSize(group) {
-    return group.some(v => sizes.includes(v.color));
+    return group.some(v => sizes.includes(v.modelo));
 }
 
 // Actualización puntual de metafields (ver reconcileMetafields). No corre en el
-// ciclo normal del watcher. 4Promo no expone material ni mapa de normalización
-// de técnicas; sólo se refresca el front (crudo, con coma).
+// ciclo normal del watcher. Material normalizado desde `composicion` (ver
+// surfaces); el front se refresca crudo (con coma).
 function buildMetafieldsForUpdate(normalized, ctx, keys) {
     const head = normalized.raw.head;
     const logical = buildClassificationMetafields({
+        material: surfaces[head.composicion] || '',
+        materialFront: head.composicion || '',
         tecnicas: [...new Set((head.metodos_impresion.split('-') || []).map(t => printingTechniques[t] || '').filter(Boolean))].join('-'),
         tecnicasFront: joinComma(head.metodos_impresion || '', '-'),
     });
@@ -85,13 +86,17 @@ function buildProductInput(normalized, ctx) {
 
     const base = {
         handle: buildHandle(shop, vendor, normalized.code, normalized.name),
-        title: `${(head.descripcion || '').split(' ')[0]} ${head.nombre_articulo} ${head.id_articulo}`.toUpperCase(),
+        title: `${(head.descripcion || '').split(' ')[0]} ${head.nombre_artd} ${head.id_articulo}`.toUpperCase(),
         descriptionHtml: head.descripcion,
         vendor: vendor.name,
         tags,
         metafields: mapShopMetafields([
+            { key: 'material', namespace: 'custom', type: 'single_line_text_field',
+              value: surfaces[head.composicion] || '' },
+            { key: 'material_front', namespace: 'custom', type: 'single_line_text_field',
+              value: head.composicion || '' },
             { key: 'medidas', namespace: 'custom', type: 'single_line_text_field',
-              value: `${head.medida_producto_alto} x ${head.medida_producto_ancho} x ${head.profundidad_articulo} cm` },
+              value: `${Number(head.medida_producto_alto)} x ${Number(head.medida_producto_ancho)} x ${Number(head.profundidad_articulo)} cm` },
             { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field',
               value: [...new Set((head.metodos_impresion.split('-') || []).map(t => printingTechniques[t] || '').filter(Boolean))].join('-') },
             { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field',
@@ -101,13 +106,13 @@ function buildProductInput(normalized, ctx) {
             { key: 'area_de_impresion', namespace: 'custom', type: 'single_line_text_field',
               value: head.area_impresion || '' },
             { key: 'peso', namespace: 'custom', type: 'single_line_text_field',
-              value: `${(parseFloat(head.peso_caja) / head.piezas_caja).toFixed(2)} kg` },
+              value: `${(parseFloat(head.caja_peso) / head.piezas).toFixed(2)} kg` },
             { key: 'peso_de_caja', namespace: 'custom', type: 'single_line_text_field',
-              value: `${head.peso_caja} kg` },
+              value: `${head.caja_peso} kg` },
             { key: 'medidas_de_caja', namespace: 'custom', type: 'single_line_text_field',
-              value: `${head.alto_caja} x ${head.ancho_caja} x ${head.largo_caja} cm` },
+              value: `${Number(head.alto_caja)} x ${Number(head.ancho_caja)} x ${Number(head.largo_caja)} cm` },
             { key: 'piezas_por_caja', namespace: 'custom', type: 'single_line_text_field',
-              value: String(head.piezas_caja) },
+              value: String(head.piezas) },
         ], shop),
         productOptions: [
             { name: 'Color', values: [{ name: 'Default' }] },
@@ -118,57 +123,43 @@ function buildProductInput(normalized, ctx) {
     return { input: addCantidadOption(base, shop), meta: { hasSize, group } };
 }
 
-async function buildAndUploadMedia(group, ctx) {
-    const tempMedia = group.flatMap((v, i) => {
+function buildMedia(group) {
+    return group.flatMap((v, i) => {
+        const imgs = (v.images || []).filter(img => img.tipo_imagen !== 'imagen_vta');
         if (i === 0) {
-            return (v.imagenes || []).map(img => ({
-                alt: img.tipo_imagen === 'imagen_color' ? v.color : '',
+            return imgs.map(img => ({
+                alt: img.tipo_imagen === 'imagen_color' ? v.modelo : '',
                 mediaContentType: 'IMAGE',
-                originalSource: img.url_imagen,
+                originalSource: encodeURI(img.url_imagen),
             }));
         }
-        return v.imagenes && v.imagenes[2] && v.imagenes[2].url_imagen
-            ? [{ alt: v.color, mediaContentType: 'IMAGE', originalSource: v.imagenes[2].url_imagen }]
+        const colorImg = imgs.find(img => img.tipo_imagen === 'imagen_color');
+        return colorImg
+            ? [{ alt: v.modelo, mediaContentType: 'IMAGE', originalSource: encodeURI(colorImg.url_imagen) }]
             : [];
     });
-
-    const media = [];
-    for (const m of tempMedia) {
-        try {
-            const r = await axios.get(m.originalSource, { responseType: 'arraybuffer' });
-            let buf = Buffer.from(r.data, 'binary');
-            if (buf.length > 20 * 1024 * 1024) buf = await sharp(buf).jpeg({ quality: 80 }).toBuffer();
-            const filename = `${group[0].id_articulo}-${m.alt || ''}.jpg`.replace(/[^a-zA-Z0-9._-]+/g, '-');
-            const target = await ctx.shopifyFns.createStagedUpload([{ filename, httpMethod: 'POST', mimeType: 'image/jpeg', resource: 'IMAGE' }]);
-            const resourceUrl = await ctx.shopifyFns.uploadFileToStagedTarget(target, buf, filename);
-            media.push({ ...m, originalSource: resourceUrl });
-        } catch (err) {
-            console.warn(`[4promo] media skip: ${err.message}`);
-        }
-    }
-    return media;
 }
 
 function buildBaseVariantPayload(rawVariant, productMediaNodes, ctx, hasSize) {
     const { locationId, computeTargetPrice } = ctx;
-    const matched = productMediaNodes && productMediaNodes.find(m => m.alt === rawVariant.color);
+    const matched = productMediaNodes && productMediaNodes.find(m => m.alt === rawVariant.modelo);
     const mediaId = matched ? matched.id : (productMediaNodes && productMediaNodes[0] && productMediaNodes[0].id);
 
-    let optColor = rawVariant.color, optTalla;
+    let optColor = rawVariant.modelo, optTalla;
     if (hasSize) {
-        const split = String(rawVariant.color).split('-');
+        const split = String(rawVariant.modelo).split('-');
         if (split[1]) { optColor = split[0]; optTalla = split[1]; }
         else { optColor = 'UNICO'; optTalla = split[0]; }
     }
 
     return {
-        inventoryItem: { sku: `${rawVariant.id_articulo} ${rawVariant.color}`, tracked: true },
+        inventoryItem: { sku: `${rawVariant.id_articulo} ${rawVariant.modelo}`, tracked: true },
         ...(mediaId ? { mediaId } : {}),
         inventoryQuantities: [{ availableQuantity: Number(rawVariant.inventario) || 0, locationId }],
         optionValues: hasSize
             ? [{ name: optColor, optionName: 'Color' }, { name: optTalla, optionName: 'Talla' }]
-            : [{ name: rawVariant.color, optionName: 'Color' }],
-        price: computeTargetPrice(Number(rawVariant.precio)),
+            : [{ name: rawVariant.modelo, optionName: 'Color' }],
+        price: computeTargetPrice(Number(rawVariant.precio_desc)),
         taxable: false,
     };
 }
@@ -186,7 +177,7 @@ function expandVariantsForUpload(normalized, ctx, productResponse) {
 
 async function uploadNewProduct(normalized, ctx) {
     const { input, meta } = buildProductInput(normalized, ctx);
-    const media = await buildAndUploadMedia(meta.group, ctx);
+    const media = buildMedia(meta.group);
     const productResponse = await ctx.shopifyFns.productCreate(input, media);
     if (!productResponse || !productResponse.id) throw new Error(`productCreate vacío para ${normalized.code}`);
     const expanded = expandVariantsForUpload(normalized, ctx, productResponse);
@@ -205,7 +196,7 @@ module.exports = {
     buildMetafieldsForUpdate,
     expandVariantsForUpload,
     uploadNewProduct,
-    buildAllMedia: (n, ctx) => buildAndUploadMedia(n.raw.group, ctx),
+    buildAllMedia: (n) => buildMedia(n.raw.group),
     buildVariantPayloadForExisting,
     getShopifyVariantKey,
     productHasSize,

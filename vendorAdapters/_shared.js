@@ -149,7 +149,7 @@ const CLASSIFICATION_METAFIELD_KEYS = {
 // Construye los metafields lógicos (namespace custom, texto) de la actualización
 // de clasificación a partir de los valores YA calculados por cada adapter. Sólo
 // incluye las props presentes (undefined = el vendor no expone esa key, p.ej.
-// 4Promo no tiene material, Preslow no tiene técnicas).
+// Preslow no tiene técnicas).
 function buildClassificationMetafields(values) {
     const out = [];
     for (const [prop, key] of Object.entries(CLASSIFICATION_METAFIELD_KEYS)) {

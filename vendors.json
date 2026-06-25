@@ -3,14 +3,14 @@
     "abbr": "4p",
     "name": "4Promo",
     "adapter": "4promo",
-    "endpoint": "https://4promotional.net:9090/WsEstrategia/inventario",
+    "endpoint": "https://api-external-clients.4promotional.net/api/products",
     "credentialEnvs": [],
     "rules": {
       "newProducts":  { "strategy": "diff", "field": "producto_nuevo" },
       "discontinued": { "strategy": "diff" },
       "offers":       { "field": "producto_promocion" },
-      "pricing":      { "field": "precio", "descuento": 0.25, "iva": 0.16 },
-      "variantKey":   { "strategy": "name", "field": "color" }
+      "pricing":      { "field": "precio_desc", "iva": 0.16 },
+      "variantKey":   { "strategy": "name", "field": "modelo" }
     }
   },
   {

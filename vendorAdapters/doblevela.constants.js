@@ -138,6 +138,7 @@ const normalizedSurfaces = {
     'Plástico': 'PLÁSTICO',
     'Libreta: Cartón plastificado / Bolígrafo: Aluminio': 'METAL',
     'Acero Inoxidable / Tritan': 'METAL',
+    'Acero inoxidable / PU': 'METAL',
     'Accesorios: Acero Inoxidable // Estuche: Aluminio': 'METAL',
     'Plástico  AS / Silicón': 'PLÁSTICO',
     'Acero Inoxidable': 'METAL',
