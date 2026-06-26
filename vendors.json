@@ -14,20 +14,6 @@
     }
   },
   {
-    "abbr": "in",
-    "name": "Innova",
-    "adapter": "innova",
-    "endpoint": "https://4vumtdis3m.execute-api.us-east-1.amazonaws.com/default/Innovation_GetAllProductos",
-    "credentialEnvs": ["INNOVA_USER", "INNOVA_PASS", "INNOVA_AUTH_TOKEN"],
-    "rules": {
-      "newProducts":  { "strategy": "diff" },
-      "discontinued": { "strategy": "diff" },
-      "offers":       { "field": "Outlet" },
-      "pricing":      { "field": "Precio", "descuento": 0.28, "iva": 0.16 },
-      "variantKey":   { "strategy": "name", "field": "Tono" }
-    }
-  },
-  {
     "abbr": "po",
     "name": "PromoOpcion",
     "adapter": "promoopcion",
@@ -42,17 +28,17 @@
     }
   },
   {
-    "abbr": "g4",
-    "name": "G4",
-    "adapter": "g4",
-    "endpoint": "https://distr.ws.g4mexico.com/index.php",
-    "credentialEnvs": ["G4_USER", "G4_KEY"],
+    "abbr": "in",
+    "name": "Innova",
+    "adapter": "innova",
+    "endpoint": "https://4vumtdis3m.execute-api.us-east-1.amazonaws.com/default/Innovation_GetAllProductos",
+    "credentialEnvs": ["INNOVA_USER", "INNOVA_PASS", "INNOVA_AUTH_TOKEN"],
     "rules": {
-      "newProducts":  { "strategy": "diff", "field": "novedad" },
+      "newProducts":  { "strategy": "diff" },
       "discontinued": { "strategy": "diff" },
-      "offers":       { "field": "promocion" },
-      "pricing":      { "field": "precio", "iva": 0.16 },
-      "variantKey":   { "strategy": "name", "field": "color" }
+      "offers":       { "field": "Outlet" },
+      "pricing":      { "field": "Precio", "descuento": 0.28, "iva": 0.16 },
+      "variantKey":   { "strategy": "name", "field": "Tono" }
     }
   },
   {
@@ -84,19 +70,6 @@
     }
   },
   {
-    "abbr": "pr",
-    "name": "Preslow",
-    "adapter": "preslow",
-    "endpoint": "https://cliente.preslow.app/v1/catalogo",
-    "credentialEnvs": ["PW_KEY"],
-    "rules": {
-      "newProducts":  { "strategy": "diff" },
-      "discontinued": { "strategy": "diff" },
-      "pricing":      { "field": "precio_distribuidor" },
-      "variantKey":   { "strategy": "name", "field": "color" }
-    }
-  },
-  {
     "abbr": "il",
     "name": "Impressline",
     "adapter": "impressline",
@@ -106,6 +79,20 @@
       "newProducts":  { "strategy": "diff", "field": "tipo" },
       "discontinued": { "strategy": "diff" },
       "pricing":      { "field": "precio", "descuento": 0.07, "iva": 0.16 },
+      "variantKey":   { "strategy": "name", "field": "color" }
+    }
+  },
+  {
+    "abbr": "g4",
+    "name": "G4",
+    "adapter": "g4",
+    "endpoint": "https://distr.ws.g4mexico.com/index.php",
+    "credentialEnvs": ["G4_USER", "G4_KEY"],
+    "rules": {
+      "newProducts":  { "strategy": "diff", "field": "novedad" },
+      "discontinued": { "strategy": "diff" },
+      "offers":       { "field": "promocion" },
+      "pricing":      { "field": "precio", "iva": 0.16 },
       "variantKey":   { "strategy": "name", "field": "color" }
     }
   },
@@ -121,6 +108,19 @@
       "offers":       { "field": "ArticuloPromocion" },
       "pricing":      { "field": "precio", "iva": 0.16 },
       "variantKey":   { "strategy": "sku", "field": "sku" }
+    }
+  },
+  {
+    "abbr": "pw",
+    "name": "Preslow",
+    "adapter": "preslow",
+    "endpoint": "https://cliente.preslow.app/v1/catalogo",
+    "credentialEnvs": ["PW_KEY"],
+    "rules": {
+      "newProducts":  { "strategy": "diff" },
+      "discontinued": { "strategy": "diff" },
+      "pricing":      { "field": "precio_distribuidor", "iva": 0.16 },
+      "variantKey":   { "strategy": "sku", "field": "modelo_ct" }
     }
   }
 ]

@@ -24,7 +24,7 @@ jobs:
       max-parallel: 1
       matrix:
         shop: [gi, hhg, psp]
-        vendor: [4p, po, in, dv, cdo, il, g4, dk]
+        vendor: [4p, po, in, dv, cdo, il, g4, dk, pw]
         exclude:
           - shop: psp
             vendor: dv
@@ -36,6 +36,8 @@ jobs:
             vendor: g4
           - shop: psp
             vendor: dk
+          - shop: psp
+            vendor: pw
     steps:
       - uses: actions/checkout@v4
 

@@ -1,46 +1,12 @@
 [
   {
-    "shop": "link",
-    "domain": "link-worldwide-gi.myshopify.com",
-    "tokenEnv": "SHOPIFY_TOKEN_LINK",
-    "graphqlUrlEnv": "GRAPHQL_URL_LINK",
-    "handleFormat": "standard",
-    "productFormat": "escalas",
-    "scales": [100, 500, 1000],
-    "vendors": ["4p", "in", "po", "g4", "dv", "cdo"],
-    "priceDivisor": {
-      "default": 0.67,
-      "byVendor": { "4p": 0.75, "in": 0.75, "po": 0.75 }
-    },
-    "metafields": {
-      "material": "material",
-      "medidas": "medidas",
-      "tecnicas_de_impresion": "tecnicas_de_impresion",
-      "tecnicas_de_impresion_front": "tecnicas_de_impresion_front",
-      "capacidad": "capacidad",
-      "area_de_impresion": "area_de_impresion",
-      "peso": "peso",
-      "peso_de_caja": "peso_de_caja",
-      "medidas_de_caja": "medidas_de_caja",
-      "piezas_por_caja": "piezas_por_caja"
-    },
-    "vendorNameToAbbr": {
-      "4Promo": "4p",
-      "Innova": "in",
-      "PromoOpcion": "po",
-      "G4": "g4",
-      "Doble Vela": "dv",
-      "CDO": "cdo"
-    }
-  },
-  {
     "shop": "gi",
     "domain": "development-gi.myshopify.com",
     "tokenEnv": "SHOPIFY_TOKEN_GI",
     "graphqlUrlEnv": "GRAPHQL_URL_GI",
     "handleFormat": "standard",
     "productFormat": "simple",
-    "vendors": ["4p", "in", "po", "g4", "dv", "cdo", "pr", "il", "dk"],
+    "vendors": ["4p", "po", "in", "dv", "cdo", "il", "g4", "dk", "pw"],
     "priceDivisor": {
       "default": 0.5
     },
@@ -59,37 +25,14 @@
     },
     "vendorNameToAbbr": {
       "4Promo": "4p",
-      "Innova": "in",
       "PromoOpcion": "po",
-      "G4": "g4",
+      "Innova": "in",
       "Doble Vela": "dv",
       "CDO": "cdo",
-      "Preslow": "pr",
       "Impressline": "il",
-      "DKPS": "dk"
-    }
-  },
-  {
-    "shop": "psp",
-    "domain": "ps-promocionales.myshopify.com",
-    "tokenEnv": "SHOPIFY_TOKEN_PSP",
-    "graphqlUrlEnv": "GRAPHQL_URL_PSP",
-    "handleFormat": "standard",
-    "productFormat": "simple",
-    "vendors": ["4p", "in", "po"],
-    "priceDivisor": {
-      "default": 0.56
-    },
-    "metafields": {
-      "material": "superficie",
-      "medidas": "medidas",
-      "tecnicas_de_impresion": "tecnicas_de_impresion",
-      "piezas_por_caja": "piezas_caja"
-    },
-    "vendorNameToAbbr": {
-      "4Promo": "4p",
-      "Innova": "in",
-      "PromoOpcion": "po"
+      "G4": "g4",
+      "DKPS": "dk",
+      "Preslow": "pw"
     }
   },
   {
@@ -99,7 +42,7 @@
     "graphqlUrlEnv": "GRAPHQL_URL_HHG",
     "handleFormat": "standard",
     "productFormat": "simple",
-    "vendors": ["4p", "in", "po", "g4", "dv", "cdo", "pr", "il", "dk"],
+    "vendors": ["4p", "po", "in", "dv", "cdo", "il", "g4", "dk", "pw"],
     "priceDivisor": {
       "default": 0.67
     },
@@ -111,14 +54,71 @@
     },
     "vendorNameToAbbr": {
       "4Promo": "4p",
-      "Innova": "in",
       "PromoOpcion": "po",
-      "G4": "g4",
+      "Innova": "in",
       "Doble Vela": "dv",
       "CDO": "cdo",
-      "Preslow": "pr",
       "Impressline": "il",
-      "DKPS": "dk"
+      "G4": "g4",
+      "DKPS": "dk",
+      "Preslow": "pw"
+    }
+  },
+  {
+    "shop": "psp",
+    "domain": "ps-promocionales.myshopify.com",
+    "tokenEnv": "SHOPIFY_TOKEN_PSP",
+    "graphqlUrlEnv": "GRAPHQL_URL_PSP",
+    "handleFormat": "standard",
+    "productFormat": "simple",
+    "vendors": ["4p", "po", "in"],
+    "priceDivisor": {
+      "default": 0.56
+    },
+    "metafields": {
+      "material": "superficie",
+      "medidas": "medidas",
+      "tecnicas_de_impresion": "tecnicas_de_impresion",
+      "piezas_por_caja": "piezas_caja"
+    },
+    "vendorNameToAbbr": {
+      "4Promo": "4p",
+      "PromoOpcion": "po",
+      "Innova": "in"
+    }
+  },
+  {
+    "shop": "link",
+    "domain": "link-worldwide-gi.myshopify.com",
+    "tokenEnv": "SHOPIFY_TOKEN_LINK",
+    "graphqlUrlEnv": "GRAPHQL_URL_LINK",
+    "handleFormat": "standard",
+    "productFormat": "escalas",
+    "scales": [100, 500, 1000],
+    "vendors": ["4p", "po", "in", "dv", "cdo", "g4"],
+    "priceDivisor": {
+      "default": 0.75,
+      "byVendor": { "4p": 0.75 }
+    },
+    "metafields": {
+      "material": "material",
+      "medidas": "medidas",
+      "tecnicas_de_impresion": "tecnicas_de_impresion",
+      "tecnicas_de_impresion_front": "tecnicas_de_impresion_front",
+      "capacidad": "capacidad",
+      "area_de_impresion": "area_de_impresion",
+      "peso": "peso",
+      "peso_de_caja": "peso_de_caja",
+      "medidas_de_caja": "medidas_de_caja",
+      "piezas_por_caja": "piezas_por_caja"
+    },
+    "vendorNameToAbbr": {
+      "4Promo": "4p",
+      "PromoOpcion": "po",
+      "Innova": "in",
+      "Doble Vela": "dv",
+      "CDO": "cdo",
+      "G4": "g4"
     }
   }
 ]

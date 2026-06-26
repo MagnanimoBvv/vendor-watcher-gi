@@ -1,22 +1,7 @@
 const axios = require('axios');
 const { buildHandle } = require('../handleParser');
-const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields } = require('./_shared');
-
-const surfaces = {
-    'POLIESTER FINO': 'TEXTIL', 'NYLON LIGHT': 'TEXTIL', 'MICROFIBRA PARIS': 'TEXTIL',
-    'NEOPRENO': 'TEXTIL', 'ALGODON PIQUE': 'TEXTIL', 'ALGODON': 'TEXTIL',
-};
-const categoryMap = {
-    'CHAMARRA': 'textil,chamarras y chalecos',
-    'CHALECO': 'textil,chamarras y chalecos',
-    'POLO BASICA': 'textil,playeras',
-    'CAMISA': 'textil,playeras',
-};
-const colorMap = {
-    'MAR': 'MARINO', 'NEG': 'NEGRO', 'GRO': 'GRIS', 'VIN': 'VINO', 'AZA': 'AZUL ACERO',
-    'ROJ': 'ROJO', 'OLI': 'OLIVO', 'ARE': 'ARENA', 'CHO': 'CHOCOLATE', 'TOP': 'TOPO',
-    'BLA': 'BLANCO', 'CIE': 'AZUL CIELO', 'OXJ': 'OXFORD', 'AZU': 'AZUL CIAN', 'ROS': 'ROSA',
-};
+const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields, buildClassificationMetafields, filterMetafieldKeys, joinComma } = require('./_shared');
+const { surfaces, categoryMap, colorMap, printingTechniques, normalizedPrintingTechniques, SIZE_GUIDE_URL, } = require('./preslow.constants');
 
 async function fetchCatalog({ vendor }) {
     const r = await axios.get(vendor.endpoint, { headers: { 'x-api-key': process.env.PW_KEY } });
@@ -32,7 +17,7 @@ async function fetchCatalog({ vendor }) {
     for (const [modelo, group] of byModel) {
         const head = group[0];
         out.push({
-            code: String(modelo),
+            code: String(modelo).toLowerCase(),
             name: `${head.linea} ${head.departamento} ${head.nombre} ${head.modelo}`,
             rawPrice: Number(head.precio_distribuidor),
             isNewExplicit: null,
@@ -52,6 +37,27 @@ async function fetchCatalog({ vendor }) {
     return out;
 }
 
+function getNormalizedPrintingTechs(arr) {
+    return [...new Set((arr || []).map(t => normalizedPrintingTechniques[t] || ''))].filter(Boolean).join('-');
+}
+
+function technicalSheetUrl(modelo) {
+    return `https://api.preslow.app/public/ecommerce/${modelo}.pdf`;
+}
+
+// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
+// ciclo normal del watcher. Preslow expone material y técnicas hardcodeadas.
+function buildMetafieldsForUpdate(normalized, ctx, keys) {
+    const head = normalized.raw.head;
+    const logical = buildClassificationMetafields({
+        material: surfaces[head.tela] || '',
+        materialFront: head.tela || '',
+        tecnicas: getNormalizedPrintingTechs(printingTechniques),
+        tecnicasFront: joinComma(printingTechniques),
+    });
+    return mapShopMetafields(filterMetafieldKeys(logical, keys), ctx.shop);
+}
+
 function buildProductInput(normalized, ctx) {
     const { shop, vendor } = ctx;
     const head = normalized.raw.head;
@@ -62,9 +68,12 @@ function buildProductInput(normalized, ctx) {
         title: productTitle,
         descriptionHtml: head.descripcion,
         vendor: vendor.name,
-        tags: `preslow,${categoryMap[head.linea] || ''}`,
+        tags: `${categoryMap[head.linea] || ''}`,
         metafields: mapShopMetafields([
-            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: surfaces[head.tela] || head.tela || '' },
+            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: surfaces[head.tela] || '' },
+            { key: 'material_front', namespace: 'custom', type: 'single_line_text_field', value: head.tela || '' },
+            { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: getNormalizedPrintingTechs(printingTechniques) },
+            { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field', value: joinComma(printingTechniques) },
         ], shop),
         productOptions: [
             { name: 'Color', values: [{ name: 'Default' }] },
@@ -74,10 +83,35 @@ function buildProductInput(normalized, ctx) {
     return { input: addCantidadOption(base, shop), meta: {} };
 }
 
-function buildMedia(group) {
+async function uploadTechnicalSpecs(modelo, ctx) {
+    const { fromBuffer } = require('pdf2pic');
+    const r = await axios.get(technicalSheetUrl(modelo), { responseType: 'arraybuffer' });
+    const pdfBuffer = Buffer.from(r.data);
+    const convert = fromBuffer(pdfBuffer, { density: 200, format: 'jpg', width: 1600, height: 1600, preserveAspectRatio: true });
+    const pages = await convert.bulk(-1, { responseType: 'buffer' });
+
+    const urls = [];
+    for (const page of pages) {
+        if (!page || !page.buffer) continue;
+        const filename = `preslow_ficha_${modelo}_${page.page}.jpg`;
+        const target = await ctx.shopifyFns.createStagedUpload([{
+            filename, httpMethod: 'POST', mimeType: 'image/jpeg', resource: 'IMAGE',
+        }]);
+        const uploaded = await ctx.shopifyFns.uploadFileToStagedTarget(target, page.buffer, filename);
+        if (uploaded) urls.push(uploaded);
+    }
+    return urls;
+}
+
+async function buildMedia(group, ctx) {
+    const head = group[0];
     const seenImages = new Set();
     const seenColors = new Set();
-    return group.flatMap(p => (p.imagenes || []).map(img => ({ src: img, color: p.color })))
+
+    // Imágenes de producto, deduplicadas por URL y conservando el orden por color.
+    // Guardamos el código de color para poder insertar los extras tras el 1er color.
+    const colorImages = group
+        .flatMap(p => (p.imagenes || []).map(src => ({ src, color: p.color })))
         .filter(img => {
             if (seenImages.has(img.src)) return false;
             seenImages.add(img.src);
@@ -85,12 +119,28 @@ function buildMedia(group) {
         })
         .map(img => {
             const colorName = colorMap[img.color] || img.color;
+            const node = { mediaContentType: 'IMAGE', originalSource: img.src };
             if (!seenColors.has(colorName)) {
                 seenColors.add(colorName);
-                return { mediaContentType: 'IMAGE', originalSource: img.src, alt: colorName };
+                node.alt = colorName; // portada por color (para asociar la variante)
             }
-            return { mediaContentType: 'IMAGE', originalSource: img.src };
+            return { node, color: img.color };
         });
+
+    const extras = [{ mediaContentType: 'IMAGE', originalSource: SIZE_GUIDE_URL }];
+    try {
+        const fichaUrls = await uploadTechnicalSpecs(head.modelo, ctx);
+        for (const u of fichaUrls) extras.push({ mediaContentType: 'IMAGE', originalSource: u });
+    } catch (err) {
+        console.warn(`[preslow] ficha técnica skip ${head.modelo}: ${err.message}`);
+    }
+
+    const firstColor = colorImages.length ? colorImages[0].color : null;
+    let firstBlockEnd = 0;
+    while (firstBlockEnd < colorImages.length && colorImages[firstBlockEnd].color === firstColor) firstBlockEnd++;
+
+    const nodes = colorImages.map(ci => ci.node);
+    return [...nodes.slice(0, firstBlockEnd), ...extras, ...nodes.slice(firstBlockEnd)];
 }
 
 function buildBaseVariantPayload(rawVariant, productMediaNodes, ctx) {
@@ -124,7 +174,7 @@ function expandVariantsForUpload(normalized, ctx, productResponse) {
 
 async function uploadNewProduct(normalized, ctx) {
     const { input } = buildProductInput(normalized, ctx);
-    const media = buildMedia(normalized.raw.group);
+    const media = await buildMedia(normalized.raw.group, ctx);
     const productResponse = await ctx.shopifyFns.productCreate(input, media);
     if (!productResponse || !productResponse.id) throw new Error(`productCreate vacío para ${normalized.code}`);
     const expanded = expandVariantsForUpload(normalized, ctx, productResponse);
@@ -136,9 +186,10 @@ async function uploadNewProduct(normalized, ctx) {
 module.exports = {
     fetchCatalog,
     buildProductInput,
+    buildMetafieldsForUpdate,
     expandVariantsForUpload,
     uploadNewProduct,
-    buildAllMedia: (n) => buildMedia(n.raw.group),
+    buildAllMedia: (n, ctx) => buildMedia(n.raw.group, ctx),
     buildVariantPayloadForExisting: (e) => e.payload,
     getShopifyVariantKey,
 };
