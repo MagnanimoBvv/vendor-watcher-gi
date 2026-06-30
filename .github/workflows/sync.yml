@@ -47,6 +47,8 @@ jobs:
 
       - run: npm ci
 
+      - run: sudo apt-get update && sudo apt-get install -y graphicsmagick ghostscript
+
       - name: Run watcher
         env:
           # SHOPIFY_TOKEN_LINK:     ${{ secrets.SHOPIFY_TOKEN_LINK }}

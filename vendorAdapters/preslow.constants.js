@@ -7,8 +7,8 @@ const surfaces = {
 const categoryMap = {
     'CHAMARRA': 'textil,chamarras y chalecos',
     'CHALECO': 'textil,chamarras y chalecos',
-    'POLO BASICA': 'textil,playeras',
-    'CAMISA': 'textil,playeras',
+    'POLO BASICA': 'textil,playeras y camisas',
+    'CAMISA': 'textil,playeras y camisas',
 };
 
 const colorMap = {
