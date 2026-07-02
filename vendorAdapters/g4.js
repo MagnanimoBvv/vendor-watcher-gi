@@ -2,6 +2,7 @@ const axios = require('axios');
 const xml2js = require('xml2js');
 const { skipAdventages, ecoAdventages, categories, extraCategories, normalizedSurfaces, normalizedPrintingTechniques } = require('./g4.constants');
 const { buildHandle } = require('../handleParser');
+const { printableSurface } = require('./surfaces');
 const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields, buildClassificationMetafields, filterMetafieldKeys, joinComma } = require('./_shared');
 
 function soapEnvelope(method, urn) {
@@ -143,12 +144,10 @@ function getCategories(p) {
     return (categories[cat] || '') + extra;
 }
 
-// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
-// ciclo normal del watcher.
 function buildMetafieldsForUpdate(normalized, ctx, keys) {
     const head = normalized.raw.head;
     const logical = buildClassificationMetafields({
-        material: normalizedSurfaces[head.material] || '',
+        material: printableSurface(head.material, head.descripcion, normalizedSurfaces),
         materialFront: head.material || '',
         tecnicas: normalizedPrintingTechniques[head.impresion] || '',
         tecnicasFront: joinComma(head.impresion || ''),
@@ -166,7 +165,7 @@ function buildProductInput(normalized, ctx) {
         vendor: vendor.name,
         tags: getCategories(head),
         metafields: mapShopMetafields([
-            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: normalizedSurfaces[head.material] || '' },
+            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: printableSurface(head.material, head.descripcion, normalizedSurfaces) },
             { key: 'material_front', namespace: 'custom', type: 'single_line_text_field', value: head.material || '' },
             { key: 'medidas', namespace: 'custom', type: 'single_line_text_field', value: head.medidas || '' },
             { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: normalizedPrintingTechniques[head.impresion] || '' },

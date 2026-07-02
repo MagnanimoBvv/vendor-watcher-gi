@@ -1,6 +1,7 @@
 const axios = require('axios');
 const { categories, ecoCategories, printingTechniquesFront, surfaces, printingTechniques } = require('./promoopcion.constants');
 const { buildHandle } = require('../handleParser');
+const { printableSurface } = require('./surfaces');
 const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields, buildClassificationMetafields, filterMetafieldKeys, joinComma } = require('./_shared');
 
 async function fetchAllProducts(vendor) {
@@ -31,13 +32,11 @@ async function fetchCatalog({ vendor }) {
     const list = Array.isArray(products) ? products : (products.response || []);
     return list.map(prod => {
         const hijos = prod.hijos || [];
-        // PromoOpción NO expone un campo explícito de "producto nuevo": la tag "nuevo"
-        // se rige únicamente por la ventana de vencimiento (Caso 2).
+
         const isNewExplicit = null;
-        // Descontinuado: TODOS los hijos con estatus "0" (string). Este campo se usa
-        // EXCLUSIVAMENTE para discontinuación; no filtra ni afecta las variantes.
+
         const isDiscontinuedExplicit = hijos.length > 0 && hijos.every(h => String(h.estatus) === '0');
-        // Oferta: PromoOpción marca con tipo "Outlet" en alguno de los hijos.
+
         const isOnOfferExplicit = hijos.some(v => v.tipo === 'Outlet');
         return {
             code: String(prod.skuPadre).toLowerCase().replace(/-+$/g, '').replace(/[\s]+/g, '-'),
@@ -80,9 +79,6 @@ function getPrintingTechniquesFront(techniques) {
     return isMulti ? arr.join('*-*') : arr.join('/-/');
 }
 
-// Técnicas normalizadas: el mapa `printingTechniques` está keyeado por la frase
-// completa tal cual viene del ws; si no existe esa clave, se cae a partir por '/'
-// y normalizar cada segmento (dedupe, join '-').
 function getNormalizedPrintingTechniques(raw) {
     const s = String(raw || '').trim();
     if (!s) return '';
@@ -90,13 +86,11 @@ function getNormalizedPrintingTechniques(raw) {
     return [...new Set(s.split('/').map(t => printingTechniques[t.trim()] || '').filter(Boolean))].join('-');
 }
 
-// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
-// ciclo normal del watcher.
 function buildMetafieldsForUpdate(normalized, ctx, keys) {
     const prod = normalized.raw.prod;
     const rawTech = (prod.impresion && prod.impresion.tecnicaImpresion) || '';
     const logical = buildClassificationMetafields({
-        material: surfaces[prod.material] || '',
+        material: printableSurface(prod.material, prod.descripcion, surfaces),
         materialFront: prod.material || '',
         tecnicas: getNormalizedPrintingTechniques(rawTech),
         tecnicasFront: joinComma(rawTech, '/'),
@@ -118,7 +112,7 @@ function buildProductInput(normalized, ctx) {
         vendor: vendor.name,
         tags: getCategories(prod),
         metafields: mapShopMetafields([
-            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: surfaces[prod.material] || '' },
+            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: printableSurface(prod.material, prod.descripcion, surfaces) },
             { key: 'material_front', namespace: 'custom', type: 'single_line_text_field', value: prod.material || '' },
             { key: 'medidas', namespace: 'custom', type: 'single_line_text_field', value: prod.medidas || '' },
             { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: getNormalizedPrintingTechniques(rawTech) },
@@ -139,15 +133,23 @@ function buildProductInput(normalized, ctx) {
 }
 
 function buildMedia(prod) {
-    const productMedia = (prod.imagenesPadre || []).map(src => ({
+    const notFoundImage = 'https://www.contenidopromo.com/Images/Items/notFound.jpg';
+
+    const productMedia = (prod.imagenesPadre || [])
+    .filter(src => src !== notFoundImage)
+    .map(src => ({
         mediaContentType: 'IMAGE',
         originalSource: encodeURI(String(src).replace(/[\s]+/g, '-')),
     }));
-    const vectorMedia = (prod.imagenesVector || []).map(src => ({
+    const vectorMedia = (prod.imagenesVector || [])
+    .filter(src => src !== notFoundImage)
+    .map(src => ({
         mediaContentType: 'IMAGE',
         originalSource: encodeURI(String(src).replace(/[\s]+/g, '-')),
     }));
-    const variantMedia = (prod.hijos || []).flatMap(v => (v.imagenesHijo || []).map((src, i) => ({
+    const variantMedia = (prod.hijos || []).flatMap(v => (v.imagenesHijo || [])
+    .filter(src => src !== notFoundImage)
+    .map((src, i) => ({
         alt: i === 0 ? v.color : '',
         mediaContentType: 'IMAGE',
         originalSource: encodeURI(String(src).replace(/[\s]+/g, '-')),

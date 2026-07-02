@@ -81,7 +81,7 @@ const categories = {
     'TIEMPO LIBRE - ESCOLARES': 'hogar,ninos',
 };
 
-const extraCategories = {   
+const extraCategories = {
     'Morral - TEXTIL - ARTÍCULOS DE MUNDIAL': ',textil,bolsas y morrales',
     'Parasol - MUNDIAL - ARTÍCULOS DE MUNDIAL': ',tiempo libre,accesorios para auto',
     'Morral - MUNDIAL - ARTÍCULOS DE MUNDIAL': ',textil,bolsas y morrales',

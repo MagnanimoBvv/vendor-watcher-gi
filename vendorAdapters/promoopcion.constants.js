@@ -500,6 +500,7 @@ const surfaces = {
     'Poliéster / Poli-algodon/ Aluminio': 'TEXTIL',
     'PU /Poliéster / Acetato de vinilo de polietileno': 'TEXTIL',
     'Poliéster / Policarbonato': 'PLÁSTICO',
+    'Policarbonato / Poliéster / Metal': 'PLÁSTICO',
     'Poliéster/Malla': 'TEXTIL',
     'Non Woven 80 g': 'TEXTIL',
     'Poliéster / Acetato de vinilo de polietileno / Metal': 'TEXTIL',

@@ -1,6 +1,7 @@
 const axios = require('axios');
 const { categories, extraCategories, sizes, printingTechniques, surfaces } = require('./4promo.constants');
 const { buildHandle } = require('../handleParser');
+const { printableSurface } = require('./surfaces');
 const {
     addCantidadOption,
     expandVariantForShopify,
@@ -63,13 +64,10 @@ function productHasSize(group) {
     return group.some(v => sizes.includes(v.modelo));
 }
 
-// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
-// ciclo normal del watcher. Material normalizado desde `composicion` (ver
-// surfaces); el front se refresca crudo (con coma).
 function buildMetafieldsForUpdate(normalized, ctx, keys) {
     const head = normalized.raw.head;
     const logical = buildClassificationMetafields({
-        material: surfaces[head.composicion] || '',
+        material: printableSurface(head.composicion, head.descripcion, surfaces),
         materialFront: head.composicion || '',
         tecnicas: [...new Set((head.metodos_impresion.split('-') || []).map(t => printingTechniques[t] || '').filter(Boolean))].join('-'),
         tecnicasFront: joinComma(head.metodos_impresion || '', '-'),
@@ -92,7 +90,7 @@ function buildProductInput(normalized, ctx) {
         tags,
         metafields: mapShopMetafields([
             { key: 'material', namespace: 'custom', type: 'single_line_text_field',
-              value: surfaces[head.composicion] || '' },
+              value: printableSurface(head.composicion, head.descripcion, surfaces) },
             { key: 'material_front', namespace: 'custom', type: 'single_line_text_field',
               value: head.composicion || '' },
             { key: 'medidas', namespace: 'custom', type: 'single_line_text_field',

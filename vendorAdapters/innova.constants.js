@@ -10,7 +10,7 @@ const surfaces = {
     'NYLON': 'TEXTIL',
     'POLIURETANO': 'PLÁSTICO',
     'RPET': 'TEXTIL',
-    // '': '',
+
     'CURPIEL, PVC': 'PLÁSTICO',
     'METAL, Acero Inoxidable': 'METAL',
     'CARTON, PLÁSTICO': 'MADERA',

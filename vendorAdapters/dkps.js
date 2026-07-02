@@ -4,6 +4,7 @@ const axios = require('axios');
 const FormData = require('form-data');
 const { categories, printingTechniques, normalizedSurfaces, normalizedPrintingTechniques, warehouses } = require('./dkps.constants');
 const { buildHandle } = require('../handleParser');
+const { printableSurface } = require('./surfaces');
 const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields, buildClassificationMetafields, filterMetafieldKeys, joinComma } = require('./_shared');
 
 const PRODUCTS_URL = 'https://bfekkcapbvnilicqzpkr.supabase.co/functions/v1/api-rest/api/productos';
@@ -117,8 +118,6 @@ function getNormalizedPrintingTechs(arr) {
     return [...new Set((arr || []).map(t => normalizedPrintingTechniques[t] || ''))].filter(Boolean).join('-');
 }
 
-// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
-// ciclo normal del watcher.
 function buildMetafieldsForUpdate(normalized, ctx, keys) {
     const head = normalized.raw.head;
     const model = normalized.code;
@@ -128,7 +127,7 @@ function buildMetafieldsForUpdate(normalized, ctx, keys) {
         tecnicasFront: joinComma(techs),
     };
     if (head.materialProducto) {
-        values.material = normalizedSurfaces[head.materialProducto] || '';
+        values.material = printableSurface(head.materialProducto, head.descripcion, normalizedSurfaces);
         values.materialFront = head.materialProducto ;
     }
     return mapShopMetafields(filterMetafieldKeys(buildClassificationMetafields(values), keys), ctx.shop);
@@ -150,7 +149,7 @@ function buildProductInput(normalized, ctx) {
         tags,
         metafields: mapShopMetafields([
             ...(head.materialProducto ? [
-                { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: normalizedSurfaces[head.materialProducto] || '' },
+                { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: printableSurface(head.materialProducto, head.descripcion, normalizedSurfaces) },
                 { key: 'material_front', namespace: 'custom', type: 'single_line_text_field', value: head.materialProducto }
             ] : []),
             ...(head.medidaProducto ? [{ key: 'medidas', namespace: 'custom', type: 'single_line_text_field', value: `${head.medidaProducto} cm` }] : []),

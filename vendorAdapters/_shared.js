@@ -99,13 +99,6 @@ function slugify(s) {
     return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase();
 }
 
-// Los adapters emiten metafields con KEYS LÓGICAS canónicas (material, medidas,
-// tecnicas_de_impresion, capacidad, area_de_impresion, peso, peso_de_caja,
-// medidas_de_caja, piezas_por_caja, tecnicas_de_impresion_front). Cada tienda
-// define en shops.json un mapeo logicalKey -> keyReal (string) o
-// { key, namespace }. Si la tienda no incluye una key lógica, ese metafield se
-// omite (no está habilitado en esa tienda). Si la tienda no define `metafields`,
-// se conservan las keys lógicas tal cual (comportamiento por defecto).
 function mapShopMetafields(logicalMetafields, shop) {
     const mapping = shop && shop.metafields;
     if (!mapping) return logicalMetafields;
@@ -114,7 +107,7 @@ function mapShopMetafields(logicalMetafields, shop) {
     for (const mf of logicalMetafields) {
         if (mf == null) continue;
         const target = mapping[mf.key];
-        if (!target) continue; // deshabilitado en esta tienda
+        if (!target) continue;
         if (typeof target === 'string') {
             out.push({ ...mf, key: target });
         } else if (typeof target === 'object') {
@@ -124,21 +117,11 @@ function mapShopMetafields(logicalMetafields, shop) {
     return out;
 }
 
-// --- Actualización puntual de metafields (función "adaptable") -----------------
-// Estos helpers dan soporte a una actualización on-demand de metafields que NO
-// corre en el ciclo normal del watcher (ver reconcileMetafields / index.js
-// --update-metafields). Hoy se usan para los 4 campos de clasificación, pero el
-// diseño permite agregar más campos sin tocar la infraestructura.
-
-// Une un valor en una sola cadena separada por coma. Acepta un array tal cual o
-// una cadena que se parte por `sep` (default '/'). Limpia espacios y vacíos.
-// Útil para los campos "_front" crudos (sin normalizar).
 function joinComma(value, sep = '/') {
     const arr = Array.isArray(value) ? value : String(value == null ? '' : value).split(sep);
     return arr.map(s => String(s).trim()).filter(Boolean).join(', ');
 }
 
-// Mapeo prop -> key lógica canónica de la actualización de clasificación.
 const CLASSIFICATION_METAFIELD_KEYS = {
     material: 'material',
     materialFront: 'material_front',
@@ -146,10 +129,6 @@ const CLASSIFICATION_METAFIELD_KEYS = {
     tecnicasFront: 'tecnicas_de_impresion_front',
 };
 
-// Construye los metafields lógicos (namespace custom, texto) de la actualización
-// de clasificación a partir de los valores YA calculados por cada adapter. Sólo
-// incluye las props presentes (undefined = el vendor no expone esa key, p.ej.
-// Preslow no tiene técnicas).
 function buildClassificationMetafields(values) {
     const out = [];
     for (const [prop, key] of Object.entries(CLASSIFICATION_METAFIELD_KEYS)) {
@@ -159,9 +138,6 @@ function buildClassificationMetafields(values) {
     return out;
 }
 
-// Filtra metafields lógicos por una lista de keys canónicas. keys nulo/vacío =>
-// no filtra (devuelve todos). Permite a --metafields=key1,key2 restringir qué se
-// actualiza.
 function filterMetafieldKeys(logicalMetafields, keys) {
     if (!keys || keys.length === 0) return logicalMetafields;
     return logicalMetafields.filter(m => keys.includes(m.key));

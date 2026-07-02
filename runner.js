@@ -67,11 +67,8 @@ async function runShopVendor(shop, vendor, opts, report) {
         metafieldKeys: opts.metafieldKeys || null,
     };
 
-    // Modo especial: sólo recalcula metafields y termina. NO corre nada del ciclo
-    // normal (tags, descontinuación, nuevos, variantes, precios) ni necesita
-    // ubicación/publicaciones.
     if (opts.updateMetafields) {
-        await reconcileMetafields(vendorProducts, shopifyByCode, ctx);
+        await reconcileMetafields(vendorProducts, shopifyByCode, ctx, { mode: 'clear' });
         return;
     }
 
@@ -93,6 +90,7 @@ async function runShopVendor(shop, vendor, opts, report) {
     await reconcileNewProducts(vendorProducts, shopifyByCode, ctx);
     await reconcileVariants(vendorProducts, shopifyByCode, ctx);
     await reconcilePricing(vendorProducts, shopifyByCode, ctx);
+    await reconcileMetafields(vendorProducts, shopifyByCode, ctx, { mode: 'keep' });
 }
 
 module.exports = { runShopVendor };

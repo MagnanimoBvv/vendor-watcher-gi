@@ -1,6 +1,7 @@
 const axios = require('axios');
 const { categories, extraCategories, printingTechniques, normalizedSurfaces, normalizedPrintingTechniques, warehouses } = require('./doblevela.constants');
 const { buildHandle } = require('../handleParser');
+const { printableSurface } = require('./surfaces');
 const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields, buildClassificationMetafields, filterMetafieldKeys, joinComma } = require('./_shared');
 
 async function fetchCatalog({ vendor }) {
@@ -20,7 +21,7 @@ async function fetchCatalog({ vendor }) {
     for (const [modelo, group] of byModel) {
         const head = group[0];
         const isNew = head.Status === 'N';
-        // Doble Vela marca OFERTA con '%' en Status (no es señal de descontinuado).
+
         const isOnOffer = String(head.Status || '').includes('%');
         out.push({
             code: String(modelo).toLowerCase().replace(/[\s]+/g, '-'),
@@ -67,13 +68,11 @@ function getCategories(prod) {
     return (categories[cs] || '') + extra;
 }
 
-// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
-// ciclo normal del watcher.
 function buildMetafieldsForUpdate(normalized, ctx, keys) {
     const head = normalized.raw.head;
     const materialRaw = (head.Material || '').replace(/\r/g, ' ');
     const logical = buildClassificationMetafields({
-        material: normalizedSurfaces[materialRaw] || '',
+        material: printableSurface(materialRaw, head.Descripcion, normalizedSurfaces),
         materialFront: materialRaw,
         tecnicas: getNormalizedPrintingTechniques(head['Tipo Impresion']),
         tecnicasFront: joinComma((head['Tipo Impresion'] || '').split(' ').map(t => printingTechniques[t] || '')),
@@ -92,7 +91,7 @@ function buildProductInput(normalized, ctx) {
         vendor: vendor.name,
         tags: getCategories(head),
         metafields: mapShopMetafields([
-            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: normalizedSurfaces[materialRaw] || '' },
+            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: printableSurface(materialRaw, head.Descripcion, normalizedSurfaces) },
             { key: 'material_front', namespace: 'custom', type: 'single_line_text_field', value: materialRaw },
             { key: 'medidas', namespace: 'custom', type: 'single_line_text_field', value: (head['Medida Producto'] || '').replace(/\r/g, ' ') },
             { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: getNormalizedPrintingTechniques(head['Tipo Impresion']) },

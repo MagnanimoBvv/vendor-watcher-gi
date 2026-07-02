@@ -1,6 +1,7 @@
 const axios = require('axios');
 const { categoriesV2, surfaces, printingTechniques } = require('./innova.constants');
 const { buildHandle } = require('../handleParser');
+const { printableSurface } = require('./surfaces');
 const {
     addCantidadOption,
     expandVariantForShopify,
@@ -140,13 +141,11 @@ function getCategories(prod) {
     return tags;
 }
 
-// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
-// ciclo normal del watcher.
 function buildMetafieldsForUpdate(normalized, ctx, keys) {
     const prod = normalized.raw;
     const materialRaw = (prod.Materiales || []).join(', ');
     const logical = buildClassificationMetafields({
-        material: surfaces[materialRaw] || '',
+        material: printableSurface(materialRaw, prod.Descripcion, surfaces),
         materialFront: materialRaw,
         tecnicas: [...new Set((prod.TecnicasImpresion || []).map(t => printingTechniques[t] || '').filter(Boolean))].join('-'),
         tecnicasFront: joinComma(prod.TecnicasImpresion || []),
@@ -167,7 +166,7 @@ function buildProductInput(normalized, ctx) {
         vendor: vendor.name,
         tags,
         metafields: mapShopMetafields([
-            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: surfaces[materialRaw] || '' },
+            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: printableSurface(materialRaw, prod.Descripcion, surfaces) },
             { key: 'material_front', namespace: 'custom', type: 'single_line_text_field', value: materialRaw },
             { key: 'medidas', namespace: 'custom', type: 'single_line_text_field', value: prod['Medidas producto'] || '' },
             { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: [...new Set((prod.TecnicasImpresion || []).map(t => printingTechniques[t] || '').filter(Boolean))].join('-') },

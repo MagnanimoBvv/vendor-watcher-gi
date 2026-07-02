@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { buildHandle } = require('../handleParser');
+const { printableSurface } = require('./surfaces');
 const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields, buildClassificationMetafields, filterMetafieldKeys, joinComma } = require('./_shared');
 const { surfaces, categoryMap, colorMap, printingTechniques, normalizedPrintingTechniques, SIZE_GUIDE_URL, } = require('./preslow.constants');
 
@@ -45,12 +46,10 @@ function technicalSheetUrl(modelo) {
     return `https://api.preslow.app/public/ecommerce/${modelo}.pdf`;
 }
 
-// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
-// ciclo normal del watcher. Preslow expone material y técnicas hardcodeadas.
 function buildMetafieldsForUpdate(normalized, ctx, keys) {
     const head = normalized.raw.head;
     const logical = buildClassificationMetafields({
-        material: surfaces[head.tela] || '',
+        material: printableSurface(head.tela, head.descripcion, surfaces, 'TEXTIL'),
         materialFront: head.tela || '',
         tecnicas: getNormalizedPrintingTechs(printingTechniques),
         tecnicasFront: joinComma(printingTechniques),
@@ -70,7 +69,7 @@ function buildProductInput(normalized, ctx) {
         vendor: vendor.name,
         tags: `${categoryMap[head.linea] || ''}`,
         metafields: mapShopMetafields([
-            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: surfaces[head.tela] || '' },
+            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: printableSurface(head.tela, head.descripcion, surfaces, 'TEXTIL') },
             { key: 'material_front', namespace: 'custom', type: 'single_line_text_field', value: head.tela || '' },
             { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: getNormalizedPrintingTechs(printingTechniques) },
             { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field', value: joinComma(printingTechniques) },
@@ -108,8 +107,6 @@ async function buildMedia(group, ctx) {
     const seenImages = new Set();
     const seenColors = new Set();
 
-    // Imágenes de producto, deduplicadas por URL y conservando el orden por color.
-    // Guardamos el código de color para poder insertar los extras tras el 1er color.
     const colorImages = group
         .flatMap(p => (p.imagenes || []).map(src => ({ src, color: p.color })))
         .filter(img => {
@@ -122,7 +119,7 @@ async function buildMedia(group, ctx) {
             const node = { mediaContentType: 'IMAGE', originalSource: img.src };
             if (!seenColors.has(colorName)) {
                 seenColors.add(colorName);
-                node.alt = colorName; // portada por color (para asociar la variante)
+                node.alt = colorName;
             }
             return { node, color: img.color };
         });

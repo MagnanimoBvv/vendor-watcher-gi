@@ -1,4 +1,3 @@
-
 const skipAdventages = [
     'Capacidad',
     'N/A',

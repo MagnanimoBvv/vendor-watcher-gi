@@ -1,6 +1,7 @@
 const axios = require('axios');
-const { icons, categories, bebidasRules, normalizedSurfaces, surfaceKeywords, normalizedPrintingTechniques } = require('./cdo.constants');
+const { icons, categories, bebidasRules, normalizedSurfaces, normalizedPrintingTechniques } = require('./cdo.constants');
 const { buildHandle } = require('../handleParser');
+const { classifySurface, printableSurface } = require('./surfaces');
 const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields, buildClassificationMetafields, filterMetafieldKeys, joinComma } = require('./_shared');
 
 async function fetchCatalog({ vendor }) {
@@ -34,31 +35,6 @@ function normalize(text) {
     return String(text || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 
-// Clasifica un texto de material a su categoría normalizada. 1) match exacto
-// contra normalizedSurfaces (conserva las decisiones ya curadas a mano); 2) si no,
-// keywords por posición (ver surfaceKeywords). Devuelve null si no hay señal.
-function classifySurface(text) {
-    if (!text) return null;
-    const exact = normalizedSurfaces[String(text).trim()];
-    if (exact) return exact;
-    const t = normalize(text);
-    let best = null, bestIdx = Infinity, bestPrio = Infinity;
-    surfaceKeywords.forEach(([cat, regexes], prio) => {
-        for (const r of regexes) {
-            const m = t.match(r);
-            if (m && (m.index < bestIdx || (m.index === bestIdx && prio < bestPrio))) {
-                best = cat; bestIdx = m.index; bestPrio = prio;
-            }
-        }
-    });
-    return best;
-}
-
-// Obtiene el texto crudo de material desde la descripción de CDO. CDO no expone un
-// campo de material: 1) si hay etiqueta "Materiales:" se usa esa línea; 2) si no,
-// se toma la PRIMERA oración que parezca un material (muchos productos arrancan con
-// "Plástico.", "Bambú.", o traen "Non-woven."/"Poliéster 600D." tras las medidas).
-// Devuelve '' si no hay ninguna señal de material.
 function extractMaterialText(description) {
     const labelled = String(description || '').match(/Materiales?\s*:\s*(.*?)(?:\r\n|\n|$)/i);
     if (labelled) return labelled[1].trim();
@@ -69,9 +45,8 @@ function extractMaterialText(description) {
     return '';
 }
 
-// Material normalizado para los metafields. '' sólo si no hay ninguna señal.
 function getNormalizedSurface(description) {
-    return classifySurface(extractMaterialText(description)) || '';
+    return printableSurface(extractMaterialText(description), description, normalizedSurfaces);
 }
 
 function matchRule(text) {
@@ -149,8 +124,6 @@ function getNormalizedPrintingTechniques(printingTechs) {
     return [...new Set((printingTechs || []).map(t => normalizedPrintingTechniques[t] || ''))].filter(Boolean).join('-');
 }
 
-// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
-// ciclo normal del watcher.
 function buildMetafieldsForUpdate(normalized, ctx, keys) {
     const prod = normalized.raw;
     const printingTechs = (prod.icons || []).filter(i => (icons || []).includes(i.label)).map(i => i.label);

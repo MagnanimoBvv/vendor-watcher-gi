@@ -1,6 +1,7 @@
 const axios = require('axios');
 const { categories, ecoCategories, normalizedSurfaces, normalizedPrintingTechniques } = require('./impressline.constants');
 const { buildHandle } = require('../handleParser');
+const { printableSurface } = require('./surfaces');
 const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields, buildClassificationMetafields, filterMetafieldKeys, joinComma } = require('./_shared');
 
 async function fetchCatalog({ vendor }) {
@@ -56,12 +57,10 @@ function getCategories(prod) {
     return (categories[cs] || '') + extra;
 }
 
-// Actualización puntual de metafields (ver reconcileMetafields). No corre en el
-// ciclo normal del watcher.
 function buildMetafieldsForUpdate(normalized, ctx, keys) {
     const prod = normalized.raw;
     const logical = buildClassificationMetafields({
-        material: normalizedSurfaces[prod.material] || '',
+        material: printableSurface(prod.material, prod.descripcion_completa, normalizedSurfaces),
         materialFront: prod.material || '',
         tecnicas: getNormalizedPrintingTechniques(prod.tipos_impresion),
         tecnicasFront: joinComma(prod.tipos_impresion || []),
@@ -79,7 +78,7 @@ function buildProductInput(normalized, ctx) {
         vendor: vendor.name,
         tags: getCategories(prod),
         metafields: mapShopMetafields([
-            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: normalizedSurfaces[prod.material] || '' },
+            { key: 'material', namespace: 'custom', type: 'single_line_text_field', value: printableSurface(prod.material, prod.descripcion_completa, normalizedSurfaces) },
             { key: 'material_front', namespace: 'custom', type: 'single_line_text_field', value: prod.material || '' },
             { key: 'medidas', namespace: 'custom', type: 'single_line_text_field', value: prod.tamano || '' },
             { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: getNormalizedPrintingTechniques(prod.tipos_impresion) },

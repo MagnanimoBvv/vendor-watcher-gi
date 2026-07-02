@@ -181,17 +181,17 @@ function makeShopifyFunctions(client) {
         return res;
     }
 
-    async function deleteMetafield(metafieldId) {
+    async function deleteMetafield(identifier) {
         const res = await client.graphql(`
-            mutation ($input: MetafieldDeleteInput!) {
-                metafieldDelete(input: $input) {
-                    deletedId
+            mutation ($metafields: [MetafieldIdentifierInput!]!) {
+                metafieldsDelete(metafields: $metafields) {
+                    deletedMetafields { key namespace ownerId }
                     userErrors { field message }
                 }
             }
-        `, { input: { id: metafieldId } }, { isMutation: true });
+        `, { metafields: [identifier] }, { isMutation: true });
         if (!client.dryRun) {
-            const errs = res.data.metafieldDelete.userErrors;
+            const errs = res.data.metafieldsDelete.userErrors;
             if (errs.length) console.error('[deleteMetafield]', errs);
         }
         return res;

@@ -8,10 +8,6 @@ const {
     WINDOW_DAYS,
 } = require('./tagWindows');
 
-// Un vendor tiene "campo explícito" para una tag si declara el field correspondiente
-// en sus reglas: "nuevo" -> newProducts.field, "oferta" -> offers.field. Cuando lo
-// tiene, la tag NO se retira automáticamente al vencer la ventana: se monitorea el
-// campo del webservice para quitar/dejar la tag.
 function tagHasExplicitField(tagName, ctx) {
     const rules = (ctx.vendor && ctx.vendor.rules) || {};
     if (tagName === 'nuevo') return !!(rules.newProducts && rules.newProducts.field);
@@ -43,25 +39,20 @@ async function expireTagWindows(shopifyProducts, ctx) {
     for (const product of shopifyProducts) {
         try {
             const tagsToRemove = [];
-            const metafieldIdsToDelete = [];
+            const metafieldsToDelete = [];
             for (const tagName of Object.keys(TAG_TO_METAFIELD)) {
                 const mfKey = TAG_TO_METAFIELD[tagName];
                 const mf = getMetafield(product, mfKey);
                 if (!mf || !mf.value) continue;
                 const date = new Date(mf.value);
                 if (isNaN(date.getTime())) continue;
-                if (date.getTime() >= today.getTime()) continue; // ventana vigente
+                if (date.getTime() >= today.getTime()) continue;
 
-                // Ventana vencida: siempre se borra el metafield de vencimiento.
-                metafieldIdsToDelete.push(mf.id);
-                // Para una tag con campo explícito del vendor ("nuevo"/Caso 1 u
-                // "oferta"/Caso A), NO se quita la tag aquí: el reconciliador
-                // correspondiente decidirá según el campo del webservice. En cualquier
-                // otro caso (sin campo, o "nuevo color") sí se retira al vencer.
+                metafieldsToDelete.push({ id: mf.id, key: mfKey });
                 if (tagHasExplicitField(tagName, ctx)) continue;
                 tagsToRemove.push(tagName);
             }
-            if (metafieldIdsToDelete.length === 0) continue;
+            if (metafieldsToDelete.length === 0) continue;
 
             if (tagsToRemove.length > 0) {
                 const newTags = product.tags.filter(t => !tagsToRemove.includes(t));
@@ -69,11 +60,12 @@ async function expireTagWindows(shopifyProducts, ctx) {
                 product.tags = newTags;
                 ctx.entry.counters.tagsRetirados += tagsToRemove.length;
             }
-            for (const id of metafieldIdsToDelete) {
-                await ctx.shopifyFns.deleteMetafield(id);
+            for (const m of metafieldsToDelete) {
+                await ctx.shopifyFns.deleteMetafield({ ownerId: product.id, namespace: 'custom', key: m.key });
             }
-            product.metafields.nodes = product.metafields.nodes.filter(m => !metafieldIdsToDelete.includes(m.id));
-            ctx.entry.counters.ventanasExpiradas += metafieldIdsToDelete.length;
+            const deletedIds = metafieldsToDelete.map(m => m.id);
+            product.metafields.nodes = product.metafields.nodes.filter(m => !deletedIds.includes(m.id));
+            ctx.entry.counters.ventanasExpiradas += metafieldsToDelete.length;
         } catch (err) {
             ctx.report.logError(ctx.entry, `expireTagWindows ${product.handle}`, err);
         }
@@ -89,8 +81,6 @@ async function reconcileNewProducts(vendorProducts, shopifyByCode, ctx) {
         try {
             const shopifyProduct = shopifyByCode.get(v.code);
 
-            // --- Producto NUEVO (no existe en Shopify): subir siempre con tag "nuevo"
-            //     + ventana de vencimiento, sin importar el vendor (estrategia diff). ---
             if (!shopifyProduct) {
                 if (typeof adapter.uploadNewProduct !== 'function') {
                     ctx.report.logError(ctx.entry, `newProducts ${v.code}`, new Error(`Adapter no implementa uploadNewProduct`));
@@ -108,18 +98,12 @@ async function reconcileNewProducts(vendorProducts, shopifyByCode, ctx) {
                 continue;
             }
 
-            // --- Producto EXISTENTE ---
-            // Mientras la ventana de "nuevo" siga vigente, NO se modifica la tag.
             const windowDate = getWindowDate(shopifyProduct, 'nuevo');
             const windowActive = windowDate && windowDate.getTime() >= today.getTime();
             if (windowActive) continue;
 
-            // Ventana expirada/ausente:
-            //  - Caso 2 (sin campo): expireTagWindows ya retiró la tag; nada que hacer.
             if (!hasNewField) continue;
 
-            //  - Caso 1 (con campo): monitorear el campo del webservice para quitar o
-            //    dejar la tag "nuevo".
             const hasTag = shopifyProduct.tags.includes('nuevo');
             if (v.isNewExplicit === false && hasTag) {
                 await ctx.shopifyFns.tagsRemove(shopifyProduct.id, ['nuevo']);
@@ -130,7 +114,7 @@ async function reconcileNewProducts(vendorProducts, shopifyByCode, ctx) {
                 shopifyProduct.tags = [...shopifyProduct.tags, 'nuevo'];
                 ctx.entry.counters.tagsAgregados++;
             }
-            // v.isNewExplicit === null (campo ausente en este producto): no se toca (conservador).
+
         } catch (err) {
             ctx.report.logError(ctx.entry, `newProducts ${v.code}`, err);
         }
@@ -213,8 +197,7 @@ async function reconcilePricing(vendorProducts, shopifyByCode, ctx) {
             }
 
             if (priceWentDown) {
-                // Bajada de precio: crea/RENUEVA la ventana y asegura la tag "oferta".
-                // Mientras la ventana siga vigente no se hará otra modificación a la tag.
+
                 await ctx.shopifyFns.setMetafields([
                     buildWindowMetafieldInput(shopifyProduct.id, 'oferta', freshUntilDate(WINDOW_DAYS))
                 ]);
@@ -224,8 +207,7 @@ async function reconcilePricing(vendorProducts, shopifyByCode, ctx) {
                     ctx.entry.counters.tagsAgregados++;
                 }
             } else if (hasOfferField) {
-                // Sin bajada este run y vendor CON campo de oferta (Caso A): si la ventana
-                // NO está vigente, monitorear el campo del webservice para quitar/dejar la tag.
+
                 const windowDate = getWindowDate(shopifyProduct, 'oferta');
                 const windowActive = windowDate && windowDate.getTime() >= today.getTime();
                 if (!windowActive) {
@@ -239,7 +221,7 @@ async function reconcilePricing(vendorProducts, shopifyByCode, ctx) {
                         shopifyProduct.tags = [...shopifyProduct.tags, 'oferta'];
                         ctx.entry.counters.tagsAgregados++;
                     }
-                    // isOnOfferExplicit === null (campo ausente en este producto): no se toca.
+
                 }
             }
         } catch (err) {
@@ -248,11 +230,6 @@ async function reconcilePricing(vendorProducts, shopifyByCode, ctx) {
     }
 }
 
-// Refresca TODA la media del producto "como si fuera la primera vez", respetando
-// el orden del vendor: crea la media nueva, borra la anterior y devuelve los nodos
-// frescos {id, alt}. Crea-antes-de-borrar para nunca dejar el producto sin imágenes
-// si algo falla a medio camino. (Borrar imágenes está permitido; nunca se borran
-// productos ni variantes.)
 async function refreshProductMedia(shopifyProduct, vendorProduct, ctx) {
     const adapter = ctx.adapter;
     if (typeof adapter.buildAllMedia !== 'function') return null;
@@ -292,15 +269,11 @@ async function reconcileVariants(vendorProducts, shopifyByCode, ctx) {
                 throw new Error(`Adapter no implementa expandVariantsForUpload`);
             }
 
-            // 1) Detecta variantes nuevas. NUNCA se borran las sobrantes (filosofía
-            //    de historial: no se elimina ningún producto ni variante).
             const svByKey = indexShopifyVariantsByKey(shopifyProduct.variants.nodes, adapter, shop);
             const probe = adapter.expandVariantsForUpload(v, ctx, shopifyProduct);
             const hasNew = probe.some(e => !svByKey.has(e.key));
             if (!hasNew) continue;
 
-            // 2) Hay color/variante nueva -> refresca TODAS las imágenes del producto
-            //    como si fuera la primera vez (orden propio de cada vendor).
             let mediaNodes = null;
             try {
                 mediaNodes = await refreshProductMedia(shopifyProduct, v, ctx);
@@ -308,14 +281,11 @@ async function reconcileVariants(vendorProducts, shopifyByCode, ctx) {
                 ctx.report.logError(ctx.entry, `mediaRefresh ${v.code}`, err);
             }
 
-            // 3) Reconstruye los payloads con la media fresca para asignar el mediaId
-            //    correcto (por color) a cada variante.
             const productResponse = mediaNodes
                 ? { id: shopifyProduct.id, media: { nodes: mediaNodes } }
                 : shopifyProduct;
             const expanded = adapter.expandVariantsForUpload(v, ctx, productResponse);
 
-            // 4) Crea SÓLO las variantes nuevas (con su mediaId).
             const toCreate = expanded.filter(e => !svByKey.has(e.key));
             if (toCreate.length > 0) {
                 if (typeof adapter.buildVariantPayloadForExisting !== 'function') {
@@ -326,8 +296,6 @@ async function reconcileVariants(vendorProducts, shopifyByCode, ctx) {
                 ctx.entry.counters.variantesAgregadas += toCreate.length;
             }
 
-            // 5) Reasigna el mediaId de las variantes EXISTENTES (su media anterior se
-            //    reconstruyó). Sólo se toca la asociación de imagen, no precio/stock.
             if (mediaNodes) {
                 const updates = [];
                 for (const e of expanded) {
@@ -339,8 +307,6 @@ async function reconcileVariants(vendorProducts, shopifyByCode, ctx) {
                 }
             }
 
-            // 6) Etiqueta "nuevo color" con ventana de vencimiento (misma lógica que
-            //    'nuevo' y 'oferta': se renueva mientras sigan apareciendo colores).
             await addNuevoColorTag(shopifyProduct, ctx);
             ctx.entry.counters.coloresNuevos++;
         } catch (err) {
@@ -349,18 +315,8 @@ async function reconcileVariants(vendorProducts, shopifyByCode, ctx) {
     }
 }
 
-// Actualización puntual de metafields. NO forma parte del ciclo normal del
-// watcher: se dispara explícitamente con `--update-metafields` (ver index.js /
-// runner.js), pensada para correr en ocasiones especiales. Recalcula los
-// metafields de clasificación (material, material_front, tecnicas_de_impresion,
-// tecnicas_de_impresion_front) de los productos que YA existen en Shopify y los
-// sobreescribe; nunca crea, descontinúa ni toca precios/variantes/tags.
-//
-// `ctx.metafieldKeys` (opcional) restringe qué keys lógicas se escriben; si es
-// null se escriben todas las que el adapter sepa construir. El conjunto de keys
-// es extensible: para una futura actualización basta con que el adapter agregue
-// más entradas en su buildMetafieldsForUpdate.
-async function reconcileMetafields(vendorProducts, shopifyByCode, ctx) {
+async function reconcileMetafields(vendorProducts, shopifyByCode, ctx, opts = {}) {
+    const mode = opts.mode === 'keep' ? 'keep' : 'clear';
     const adapter = ctx.adapter;
     if (typeof adapter.buildMetafieldsForUpdate !== 'function') {
         ctx.report.logError(ctx.entry, 'metafields', new Error(`Adapter ${ctx.vendor.adapter} no implementa buildMetafieldsForUpdate`));
@@ -369,17 +325,37 @@ async function reconcileMetafields(vendorProducts, shopifyByCode, ctx) {
 
     for (const v of vendorProducts) {
         const shopifyProduct = shopifyByCode.get(v.code);
-        if (!shopifyProduct) continue; // sólo se actualizan productos existentes
+        if (!shopifyProduct) continue;
 
         try {
-            const metafields = adapter.buildMetafieldsForUpdate(v, ctx, ctx.metafieldKeys)
-                // No se sobreescribe con vacío para no borrar datos buenos ya cargados.
-                .filter(m => m && m.value !== '' && m.value != null)
-                .map(m => ({ ...m, ownerId: shopifyProduct.id }));
-            if (metafields.length === 0) continue;
+            const built = adapter.buildMetafieldsForUpdate(v, ctx, ctx.metafieldKeys);
+            const currentByKey = new Map(
+                ((shopifyProduct.metafields && shopifyProduct.metafields.nodes) || []).map(m => [m.key, m])
+            );
 
-            await ctx.shopifyFns.setMetafields(metafields);
-            ctx.entry.counters.metafieldsActualizados += metafields.length;
+            const toSet = [];
+            const toClear = [];
+            for (const mf of built) {
+                if (!mf) continue;
+                const current = currentByKey.get(mf.key);
+                const currentValue = current ? current.value : undefined;
+                const newValue = mf.value == null ? '' : mf.value;
+
+                if (newValue !== '') {
+                    if (currentValue !== newValue) toSet.push({ ...mf, ownerId: shopifyProduct.id });
+                } else if (mode === 'clear' && current && currentValue) {
+                    toClear.push({ ownerId: shopifyProduct.id, namespace: mf.namespace || 'custom', key: mf.key });
+                }
+            }
+
+            if (toSet.length > 0) {
+                await ctx.shopifyFns.setMetafields(toSet);
+                ctx.entry.counters.metafieldsActualizados += toSet.length;
+            }
+            for (const identifier of toClear) {
+                await ctx.shopifyFns.deleteMetafield(identifier);
+                ctx.entry.counters.metafieldsVaciados += 1;
+            }
         } catch (err) {
             ctx.report.logError(ctx.entry, `metafields ${v.code}`, err);
         }

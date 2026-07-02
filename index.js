@@ -11,8 +11,7 @@ function parseArgs(argv) {
         if (arg === '--dry-run') opts.dryRun = true;
         else if (arg.startsWith('--shop=')) opts.shop = arg.slice(7);
         else if (arg.startsWith('--vendor=')) opts.vendor = arg.slice(9);
-        // Modo especial (NO corre en el ciclo normal): sólo recalcula metafields.
-        // Opcionalmente --metafields=key1,key2 restringe qué keys lógicas escribir.
+
         else if (arg === '--update-metafields') opts.updateMetafields = true;
         else if (arg.startsWith('--metafields=')) {
             opts.updateMetafields = true;
