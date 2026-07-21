@@ -19,7 +19,7 @@ async function fetchPage(vendor, page) {
             User: process.env.INNOVA_USER,
             Clave: process.env.INNOVA_PASS,
             page,
-            limit: 100,
+            limit: 120,
         },
         headers: { 'auth-token': process.env.INNOVA_AUTH_TOKEN },
     });
