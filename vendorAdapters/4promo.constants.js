@@ -78,6 +78,7 @@ const categories = {
     'MARCAS - FROC': 'bebidas,termos',
     'MARCAS - ACCESORIOS DE OFICINA': 'oficina,accesorios de oficina',
     'TIEMPO LIBRE - ENTRETENIMIENTO': 'tiempo libre,entretenimiento',
+    'TIEMPO LIBRE - ARTÍCULOS DE FÚTBOL': 'tiempo libre,entretenimiento',
     'TIEMPO LIBRE - DEPORTES': 'tiempo libre,entretenimiento',
     'TIEMPO LIBRE - ESCOLARES': 'hogar,ninos',
 };

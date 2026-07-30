@@ -1,7 +1,6 @@
 [
   {
     "shop": "gi",
-    "domain": "development-gi.myshopify.com",
     "tokenEnv": "SHOPIFY_TOKEN_GI",
     "graphqlUrlEnv": "GRAPHQL_URL_GI",
     "handleFormat": "standard",
@@ -37,7 +36,6 @@
   },
   {
     "shop": "hhg",
-    "domain": "gi-hh-global.myshopify.com",
     "tokenEnv": "SHOPIFY_TOKEN_HHG",
     "graphqlUrlEnv": "GRAPHQL_URL_HHG",
     "handleFormat": "standard",
@@ -66,7 +64,6 @@
   },
   {
     "shop": "psp",
-    "domain": "ps-promocionales.myshopify.com",
     "tokenEnv": "SHOPIFY_TOKEN_PSP",
     "graphqlUrlEnv": "GRAPHQL_URL_PSP",
     "handleFormat": "standard",
@@ -89,7 +86,6 @@
   },
   {
     "shop": "link",
-    "domain": "link-worldwide-gi.myshopify.com",
     "tokenEnv": "SHOPIFY_TOKEN_LINK",
     "graphqlUrlEnv": "GRAPHQL_URL_LINK",
     "handleFormat": "standard",
