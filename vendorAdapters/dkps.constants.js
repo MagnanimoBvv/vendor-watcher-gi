@@ -6,6 +6,7 @@ const categories = {
     'GORRAS PREMIUM': 'textil,gorras y cangureras',
     'PLAYERAS': 'textil,playeras y camisas',
     'SUDADERAS': 'textil,chamarras y chalecos',
+    'CHAMARRAS': 'textil,chamarras y chalecos',
     'TERMOS': 'bebidas,termos',
     'CILINDROS': 'bebidas,cilindros de plastico',
     'INTERNO': 'hogar,accesorios del hogar',
@@ -71,6 +72,15 @@ const printingTechniques = {
         'Sublimación',
         'Serigrafía'
     ],
+    'CHAMARRAS': [
+        'Recorte de Vinil',
+        'DTF',
+        'Sublibordado',
+        'Vinil Impreso',
+        'Bordado',
+        'Sublimación',
+        'Serigrafía'
+    ],
     'TERMOS': [
         'Recorte de Vinil',
         'Impresión UV 360',
@@ -100,6 +110,7 @@ const surfaces = [
     '50% Algodon 50% Poliester', // Solo gorras
     'null',
     '87% Nylon 13% Spandex', // Solo gorras premium
+    '77% Nylon 23% Spandex', // Solo chamarras
     '80% Algodón 20% Poliéster', // Solo gorras premium
     '60% Poliester 32% Nylon 8% Spandex', // Solo gorras premium
     '60% Poliéster 32% Nylon 8% Spandex', // Solo gorras premium
@@ -132,6 +143,7 @@ const normalizedSurfaces = {
     '50% Algodon 50% Poliester': 'TEXTIL',
     'null': '',
     '87% Nylon 13% Spandex': 'TEXTIL',
+    '77% Nylon 23% Spandex': 'TEXTIL',
     '80% Algodón 20% Poliéster': 'TEXTIL',
     '60% Poliester 32% Nylon 8% Spandex': 'TEXTIL',
     '60% Poliéster 32% Nylon 8% Spandex': 'TEXTIL',
