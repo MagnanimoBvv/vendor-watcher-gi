@@ -27,21 +27,30 @@ function getFactor(vendor, { applyDiscount = true } = {}) {
     return (1 - descuento) * (1 + iva);
 }
 
-function computeTargetPrice(rawPrice, shop, vendor, rawVariant) {
+function computeTargetCost(rawPrice, vendor, rawVariant) {
     const raw = Number(rawPrice);
     if (!Number.isFinite(raw)) {
-        throw new Error(`computeTargetPrice: rawPrice no numérico (${rawPrice})`);
+        throw new Error(`computeTargetCost: rawPrice no numérico (${rawPrice})`);
     }
+    const applyDiscount = discountApplies(vendor, rawVariant);
+    return raw * getFactor(vendor, { applyDiscount });
+}
+
+function computeTargetPrice(rawPrice, shop, vendor, rawVariant) {
     const divisor = getDivisor(shop, vendor.abbr);
     if (!divisor) {
         throw new Error(`shops.json: priceDivisor inválido (0) para ${shop.shop}/${vendor.abbr}`);
     }
-    const applyDiscount = discountApplies(vendor, rawVariant);
-    return (raw * getFactor(vendor, { applyDiscount })) / divisor;
+    return computeTargetCost(rawPrice, vendor, rawVariant) / divisor;
 }
 
 function priceDiffers(a, b) {
     return Math.abs(Number(a) - Number(b)) > 0.01;
 }
 
-module.exports = { computeTargetPrice, getDivisor, priceDiffers };
+function costDiffers(currentCost, targetCost) {
+    if (currentCost == null || currentCost === '') return true;
+    return priceDiffers(currentCost, targetCost);
+}
+
+module.exports = { computeTargetPrice, computeTargetCost, getDivisor, priceDiffers, costDiffers };

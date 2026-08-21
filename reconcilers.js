@@ -14,7 +14,7 @@ function tagHasExplicitField(tagName, ctx) {
     if (tagName === 'oferta') return !!(rules.offers && rules.offers.field);
     return false;
 }
-const { priceDiffers } = require('./pricing');
+const { priceDiffers, costDiffers } = require('./pricing');
 const { getShopifyVariantKey: defaultShopifyKey } = require('./vendorAdapters/_shared');
 
 function shopifyKeyFor(adapter, sv, shop) {
@@ -31,6 +31,12 @@ function indexShopifyVariantsByKey(variants, adapter, shop) {
         if (k) map.set(k, sv);
     }
     return map;
+}
+
+function currentUnitCost(shopifyVariant) {
+    const inv = shopifyVariant.inventoryItem;
+    if (!inv || !inv.unitCost) return null;
+    return inv.unitCost.amount;
 }
 
 async function expireTagWindows(shopifyProducts, ctx) {
@@ -179,21 +185,37 @@ async function reconcilePricing(vendorProducts, shopifyByCode, ctx) {
 
             const updates = [];
             let priceWentDown = false;
+            let priceChanges = 0;
+            let costChanges = 0;
 
             for (const e of expanded) {
                 const sv = svByKey.get(e.key);
                 if (!sv) continue;
+
+                const update = { id: sv.id };
+
                 const target = Number(e.payload.price);
                 const current = Number(sv.price);
                 if (priceDiffers(target, current)) {
-                    updates.push({ id: sv.id, price: target.toFixed(2) });
+                    update.price = target.toFixed(2);
+                    priceChanges++;
                     if (target < current) priceWentDown = true;
                 }
+
+                const targetCost = Number(e.payload.inventoryItem && e.payload.inventoryItem.cost);
+                const currentCost = currentUnitCost(sv);
+                if (Number.isFinite(targetCost) && costDiffers(currentCost, targetCost)) {
+                    update.inventoryItem = { cost: targetCost.toFixed(2) };
+                    costChanges++;
+                }
+
+                if (update.price != null || update.inventoryItem) updates.push(update);
             }
 
             if (updates.length > 0) {
                 await ctx.shopifyFns.productVariantsBulkUpdate(shopifyProduct.id, updates);
-                ctx.entry.counters.preciosCambiados += updates.length;
+                ctx.entry.counters.preciosCambiados += priceChanges;
+                ctx.entry.counters.costosCambiados += costChanges;
             }
 
             if (priceWentDown) {

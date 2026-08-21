@@ -43,6 +43,9 @@ function expandVariantForShopify(baseVariant, shop) {
     for (const cantidad of scales) {
         const copy = JSON.parse(JSON.stringify(baseVariant));
         copy.price = (Number(baseVariant.price) * cantidad).toFixed(2);
+        if (copy.inventoryItem && copy.inventoryItem.cost != null) {
+            copy.inventoryItem.cost = (Number(baseVariant.inventoryItem.cost) * cantidad).toFixed(2);
+        }
         if (Array.isArray(copy.inventoryQuantities) && copy.inventoryQuantities[0]) {
             const stock = Number(copy.inventoryQuantities[0].availableQuantity) || 0;
             copy.inventoryQuantities[0].availableQuantity = stock >= cantidad ? 1 : 0;

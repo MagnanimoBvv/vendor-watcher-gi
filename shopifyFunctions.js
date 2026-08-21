@@ -47,7 +47,7 @@ function makeShopifyFunctions(client) {
                                 price
                                 compareAtPrice
                                 sku
-                                inventoryItem { id }
+                                inventoryItem { id unitCost { amount } }
                                 selectedOptions { name value }
                             }
                         }
@@ -90,7 +90,7 @@ function makeShopifyFunctions(client) {
                             price
                             compareAtPrice
                             sku
-                            inventoryItem { id }
+                            inventoryItem { id unitCost { amount } }
                             selectedOptions { name value }
                         }
                     }
@@ -201,7 +201,7 @@ function makeShopifyFunctions(client) {
         const res = await client.graphql(`
             mutation ($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
                 productVariantsBulkUpdate(productId: $productId, variants: $variants) {
-                    productVariants { id title price compareAtPrice }
+                    productVariants { id title price compareAtPrice inventoryItem { unitCost { amount } } }
                     userErrors { field message }
                 }
             }

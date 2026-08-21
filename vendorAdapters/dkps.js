@@ -242,20 +242,21 @@ async function uploadTechnicalSpecs(ficha, ctx) {
 }
 
 function buildBaseVariantPayload(rawVariant, productMediaNodes, ctx, hasSize) {
-    const { locationId, computeTargetPrice } = ctx;
+    const { locationId, computeTargetPrice, computeTargetCost } = ctx;
+    const rawPrice = Number(rawVariant._price) || 0;
     const color = (rawVariant.colorProducto || []).join('');
     const matched = productMediaNodes && productMediaNodes.find(m => m.alt === color);
     const mediaId = matched ? matched.id : (productMediaNodes && productMediaNodes[0] && productMediaNodes[0].id);
 
     return {
-        inventoryItem: { sku: rawVariant.sku, tracked: true },
+        inventoryItem: { sku: rawVariant.sku, tracked: true, cost: computeTargetCost(rawPrice) },
         ...(mediaId ? { mediaId } : {}),
         inventoryQuantities: [{ availableQuantity: Number(rawVariant._stock) || 0, locationId }],
         optionValues: [
             { name: color, optionName: 'Color' },
             ...(hasSize ? [{ name: (rawVariant.tallas || []).join(''), optionName: 'Talla' }] : []),
         ],
-        price: computeTargetPrice(Number(rawVariant._price) || 0),
+        price: computeTargetPrice(rawPrice),
         taxable: false,
     };
 }

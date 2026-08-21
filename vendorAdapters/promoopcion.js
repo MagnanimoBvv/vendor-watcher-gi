@@ -165,19 +165,20 @@ function buildMedia(prod) {
 }
 
 function buildBaseVariantPayload(rawVariant, productMediaNodes, ctx, hasSize) {
-    const { locationId, computeTargetPrice } = ctx;
+    const { locationId, computeTargetPrice, computeTargetCost } = ctx;
+    const rawPrice = Number(rawVariant.precio);
     const matched = productMediaNodes && productMediaNodes.find(m => m.alt === rawVariant.color);
     const mediaId = matched ? matched.id : (productMediaNodes && productMediaNodes[0] && productMediaNodes[0].id);
 
     return {
-        inventoryItem: { sku: rawVariant.skuHijo, tracked: true },
+        inventoryItem: { sku: rawVariant.skuHijo, tracked: true, cost: computeTargetCost(rawPrice, rawVariant) },
         ...(mediaId ? { mediaId } : {}),
         inventoryQuantities: [{ availableQuantity: Number(rawVariant._stock) || 0, locationId }],
         optionValues: [
             { name: rawVariant.color, optionName: 'Color' },
             ...(hasSize ? [{ name: rawVariant.talla || 'UNICA', optionName: 'Talla' }] : []),
         ],
-        price: computeTargetPrice(Number(rawVariant.precio), rawVariant),
+        price: computeTargetPrice(rawPrice, rawVariant),
         taxable: false,
     };
 }

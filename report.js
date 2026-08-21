@@ -10,6 +10,7 @@ function makeReport() {
                 descontinuados: 0,
                 reactivados: 0,
                 preciosCambiados: 0,
+                costosCambiados: 0,
                 variantesAgregadas: 0,
                 coloresNuevos: 0,
                 tagsAgregados: 0,

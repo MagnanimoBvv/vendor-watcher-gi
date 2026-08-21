@@ -206,7 +206,8 @@ function buildMedia(group) {
 }
 
 function buildBaseVariantPayload(rawVariant, productMediaNodes, ctx, colorCount) {
-    const { locationId, computeTargetPrice } = ctx;
+    const { locationId, computeTargetPrice, computeTargetCost } = ctx;
+    const rawPrice = getRawPrice(rawVariant);
     const baseColor = rawVariant.nombre_color;
     colorCount[baseColor] = (colorCount[baseColor] || 0) + 1;
     const colorName = colorCount[baseColor] === 1 ? baseColor : `${baseColor} ${colorCount[baseColor]}`;
@@ -214,11 +215,11 @@ function buildBaseVariantPayload(rawVariant, productMediaNodes, ctx, colorCount)
     const mediaId = matched ? matched.id : (productMediaNodes && productMediaNodes[0] && productMediaNodes[0].id);
 
     return {
-        inventoryItem: { sku: rawVariant.codigo_producto, tracked: true },
+        inventoryItem: { sku: rawVariant.codigo_producto, tracked: true, cost: computeTargetCost(rawPrice) },
         ...(mediaId ? { mediaId } : {}),
         inventoryQuantities: [{ availableQuantity: Number(rawVariant._stock) || 0, locationId }],
         optionValues: [{ name: String(colorName).toUpperCase(), optionName: 'Color' }],
-        price: computeTargetPrice(getRawPrice(rawVariant)),
+        price: computeTargetPrice(rawPrice),
         taxable: false,
     };
 }

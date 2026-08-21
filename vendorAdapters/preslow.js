@@ -141,20 +141,21 @@ async function buildMedia(group, ctx) {
 }
 
 function buildBaseVariantPayload(rawVariant, productMediaNodes, ctx) {
-    const { locationId, computeTargetPrice } = ctx;
+    const { locationId, computeTargetPrice, computeTargetCost } = ctx;
+    const rawPrice = Number(rawVariant.precio_distribuidor);
     const colorName = colorMap[rawVariant.color] || rawVariant.color;
     const matched = productMediaNodes && productMediaNodes.find(m => m.alt === colorName);
     const mediaId = matched ? matched.id : (productMediaNodes && productMediaNodes[0] && productMediaNodes[0].id);
 
     return {
-        inventoryItem: { sku: rawVariant.modelo_ct, tracked: true },
+        inventoryItem: { sku: rawVariant.modelo_ct, tracked: true, cost: computeTargetCost(rawPrice) },
         ...(mediaId ? { mediaId } : {}),
         inventoryQuantities: [{ availableQuantity: Number(rawVariant.disponible) || 0, locationId }],
         optionValues: [
             { optionName: 'Color', name: colorName },
             { optionName: 'Talla', name: rawVariant.talla },
         ],
-        price: computeTargetPrice(Number(rawVariant.precio_distribuidor)),
+        price: computeTargetPrice(rawPrice),
         taxable: false,
     };
 }

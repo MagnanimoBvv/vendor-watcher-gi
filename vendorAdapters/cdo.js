@@ -207,17 +207,18 @@ function buildMedia(prod) {
 }
 
 function buildBaseVariantPayload(rawVariant, productMediaNodes, ctx) {
-    const { locationId, computeTargetPrice } = ctx;
+    const { locationId, computeTargetPrice, computeTargetCost } = ctx;
+    const rawPrice = Number(rawVariant.net_price);
     const colorName = (rawVariant.color && rawVariant.color.name) || ((rawVariant.colors || []).map(c => c.name).join('/'));
     const matched = productMediaNodes && productMediaNodes.find(m => m.alt === colorName);
     const mediaId = matched ? matched.id : (productMediaNodes && productMediaNodes[0] && productMediaNodes[0].id);
 
     return {
-        inventoryItem: { sku: rawVariant.sku, tracked: true },
+        inventoryItem: { sku: rawVariant.sku, tracked: true, cost: computeTargetCost(rawPrice) },
         ...(mediaId ? { mediaId } : {}),
         inventoryQuantities: [{ availableQuantity: Number(rawVariant.stock_available) || 0, locationId }],
         optionValues: [{ name: String(colorName).toUpperCase(), optionName: 'Color' }],
-        price: computeTargetPrice(Number(rawVariant.net_price)),
+        price: computeTargetPrice(rawPrice),
         taxable: false,
     };
 }

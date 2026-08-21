@@ -2,7 +2,7 @@ const { makeShopifyClient } = require('./shopifyClient');
 const { makeShopifyFunctions } = require('./shopifyFunctions');
 const { getAdapter } = require('./vendorAdapters');
 const { parseHandle } = require('./handleParser');
-const { computeTargetPrice } = require('./pricing');
+const { computeTargetPrice, computeTargetCost } = require('./pricing');
 const {
     expireTagWindows,
     reconcileNewProducts,
@@ -84,6 +84,7 @@ async function runShopVendor(shop, vendor, opts, report) {
     ctx.locationId = locationId;
     ctx.publications = publications;
     ctx.computeTargetPrice = (raw, rawVariant) => computeTargetPrice(raw, shop, vendor, rawVariant);
+    ctx.computeTargetCost = (raw, rawVariant) => computeTargetCost(raw, vendor, rawVariant);
 
     await expireTagWindows(shopifyProducts, ctx);
     await reconcileDiscontinued(vendorProducts, shopifyByCode, ctx);
