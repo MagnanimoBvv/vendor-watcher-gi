@@ -64,7 +64,6 @@ function getCategories(prod) {
     }
     const cs = `${prod.Familia} - ${prod.SubFamilia}`;
     if ((prod.Descripcion || '').includes('ecológic')) extra += extraCategories[cs];
-    if ((prod.NOMBRE || '').includes('SOCCER')) extra += ',mundial';
     return (categories[cs] || '') + extra;
 }
 

@@ -18,9 +18,9 @@ const categories = {
     'BOLIGRAFOS - BOLÍGRAFOS PLÁSTICO': 'oficina,boligrafos de plastico',
     'MARCAS - TARGUS': 'textil,mochilas y maletas',
     'TEXTIL - BOLSO DE HOMBRO': 'textil,gorras y cangureras',
-    'TEXTIL - ARTÍCULOS DE MUNDIAL': 'mundial', //
+    'TEXTIL - ARTÍCULOS DE MUNDIAL': '', //
     'OFICINA - ESCOLARES': 'hogar,ninos',
-    'MUNDIAL - ARTÍCULOS DE MUNDIAL': 'mundial', //
+    'MUNDIAL - ARTÍCULOS DE MUNDIAL': '', //
     'BOLIGRAFOS - BOLÍGRAFOS ECOLÓGICOS': 'ecologicos,boligrafos ecologicos,oficina',
     'HOGAR - BAR': 'hogar,cocina',
     'OFICINA - ACCESORIOS DE OFICINA': 'oficina,accesorios de oficina',
@@ -38,12 +38,12 @@ const categories = {
     'BEBIDAS - ECO BEBIDAS ♻️': 'ecologicos,bebidas ecologicas', //
     'ARTE - HUICHOL': '', //
     'TIEMPO LIBRE - BALONES': 'tiempo libre,entretenimiento',
-    'MUNDIAL - BALONES': 'tiempo libre,entretenimiento,mundial',
+    'MUNDIAL - BALONES': 'tiempo libre,entretenimiento',
     'HOGAR - BBQ': 'hogar,cocina',
     'HOGAR - COCINA': 'hogar,cocina',
     'BEBIDAS - TAZAS': 'bebidas,tazas',
     'HOGAR - LUNCH': 'hogar,cocina',
-    'HOGAR - ARTÍCULOS DE MUNDIAL': 'mundial', //
+    'HOGAR - ARTÍCULOS DE MUNDIAL': '', //
     'BEBIDAS - VASOS Y TARROS': 'bebidas,vasos',
     'ECOLÓGICOS - BAR': 'ecologicos,hogar ecologico,hogar,cocina',
     'HERRAMIENTAS - LÁMPARAS': 'tiempo libre,herramientas de trabajo',
@@ -52,13 +52,13 @@ const categories = {
     'ECOLÓGICOS - NOTAS': 'ecologicos,oficina ecologica,oficina,accesorios de oficina',
     'TEXTIL - LONCHERAS Y HIELERAS': 'textil,hieleras y loncheras',
     'TIEMPO LIBRE - ANTIESTRÉS': 'tiempo libre,antiestres',
-    'TIEMPO LIBRE - ARTÍCULOS DE MUNDIAL': 'mundial', //
+    'TIEMPO LIBRE - ARTÍCULOS DE MUNDIAL': '', //
     'TIEMPO LIBRE - MASCOTAS': 'hogar,accesorios del hogar',
     'LLAVEROS - LLAVEROS METÁLICOS': 'tiempo libre,llaveros',
     'LLAVEROS - LLAVEROS MULTIFUNCIONALES': 'tiempo libre,llaveros',
-    'LLAVEROS - ARTÍCULOS DE MUNDIAL': 'mundial', //
+    'LLAVEROS - ARTÍCULOS DE MUNDIAL': '', //
     'OFICINA - CARPETAS': 'oficina,libretas y carpetas',
-    'OFICINA - ARTÍCULOS DE MUNDIAL': 'mundial', //
+    'OFICINA - ARTÍCULOS DE MUNDIAL': '', //
     'TEXTIL - PARAGUAS E IMPERMEABLES': 'textil,paraguas e impermeables',
     'SUBLIMACIÓN - VASOS Y TARROS': 'bebidas,vasos',
     'SUBLIMACIÓN - CILINDROS METÁLICOS': 'bebidas,cilindros de metal y vidrio',

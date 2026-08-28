@@ -63,7 +63,6 @@ function getCategories(prod) {
     tags += (prod.variants || []).some(v => v.novedad === true) ? ',nuevo' : '';
     const promoCategories = ['Precios Mejorados', 'Super Promo'];
     tags += (prod.categories || []).some(c => promoCategories.includes((c.name || '').trim())) ? ',oferta' : '';
-    tags += (prod.categories || []).some(c => (c.name || '').trim() === 'Mundial 2026') ? ',mundial' : '';
 
     const mapped = (prod.categories || []).map(c => (c.name || '').trim());
     const filtered = (categories || []).filter(c => mapped.includes(c));

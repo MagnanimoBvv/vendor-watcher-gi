@@ -65,7 +65,6 @@ function productHasSize(prod) {
 function getCategories(prod) {
     let extra = '';
     extra += (prod.hijos || []).some(v => v.tipo === 'Outlet') ? ',oferta' : '';
-    extra += String(prod.skuPadre || '').startsWith('SOC') ? ',mundial' : '';
     if ((prod.descripcion || '').includes('ecológic')) {
         extra += ecoCategories[`${prod.categorias} - ${prod.subCategorias}`.trim()] || '';
     }

@@ -64,7 +64,6 @@ function getCategories(prod) {
     let tags = '';
     const cats = [...(prod.Categoria || []), ...(prod.SubCategorias || [])];
     tags += cats.includes('Outlet') ? ',oferta' : '';
-    tags += cats.includes('Mundial 2026') ? ',mundial' : '';
     const filtered = (categoriesV2 || []).filter(c => cats.includes(c));
     const firstName = normalize((prod.Nombre || '').split(' ')[0]);
     const firstCode = normalize((prod.Codigo || '').split('-')[0]);
