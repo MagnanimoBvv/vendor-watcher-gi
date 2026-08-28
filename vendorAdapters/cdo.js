@@ -89,6 +89,7 @@ function getCategories(prod) {
             'Audio': ',tecnologia,audifonos y bocinas',
             'Llaveros': ',tiempo libre,llaveros',
             'Automóvil': ',tiempo libre,accesorios para auto',
+            'Mascotas': ',hogar,accesorios del hogar',
         };
         if (map[fc]) { tags += map[fc]; break; }
         if (fc === 'Tecnología') { tags += firstName === 'power' ? ',tecnologia,power banks' : ',tecnologia,accesorios de tecnologia'; break; }

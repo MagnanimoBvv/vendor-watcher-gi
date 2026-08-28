@@ -39,6 +39,7 @@ const categories = [
     'Tecnología',
     'Llaveros',
     'Automóvil',
+    'Mascotas',
     'Salud y Belleza',
     'Bebidas',
     'Escrituras Metálicas',

@@ -3,7 +3,7 @@ const SURFACE_CATEGORIES = ['VIDRIO', 'CERÁMICA', 'MADERA', 'TEXTIL', 'RUBBER',
 const SURFACE_KEYWORDS = [
     ['VIDRIO',   [/vidrio/, /borosilicato/, /\bcristal/, /\bk9\b/]],
     ['CERÁMICA', [/ceramica/, /porcelana/, /\bgres\b/, /\bloza\b/, /\bbarro\b/, /arcilla/]],
-    ['MADERA',   [/bambu/, /bamboo/, /madera/, /corcho/, /carton/, /kraft/, /papel/, /paper/, /periodico/, /couche/, /\bmdf\b/, /\bpino\b/, /haya/, /acacia/, /\btilo\b/, /marmol/, /\bcana\b/, /\bcoco\b/, /mimbre/, /ratan/, /\byute\b/]],
+    ['MADERA',   [/bambu/, /bamboo/, /madera/, /corcho/, /carton/, /kraft/, /papel/, /paper/, /periodico/, /couche/, /\bmdf\b/, /\bpino\b/, /haya/, /acacia/, /\btilo\b/, /marmol/, /\bcana\b/, /\bcoco\b/, /mimbre/, /ratan/, /\byute\b/, /crayon/]],
     ['TEXTIL',   [/poliester/, /polyester/, /algodon/, /\btela\b/, /textil/, /nylon/, /nailon/, /\blona\b/, /ripstop/, /fieltro/, /jacquard/, /oxford/, /elastano/, /\brpet\b/, /forro/, /gucci/, /wulong/, /tasl[ao]n/, /pongee/, /\blino\b/, /lienzo/, /felpa/, /neopren/, /poliamida/, /spandex/, /microfibra/, /\bpeva\b/, /franela/, /non[ -]?woven/, /\bwoven\b/, /canvas/, /mezclilla/, /gamuza/, /terciopelo/, /\bpana\b/, /loneta/, /\bmalla\b/, /\bmesh\b/, /vinil/, /vinipiel/, /acetato/, /tarpaulin/, /\bpiel\b/, /curpiel/, /cuerina/, /cuero/, /dacron/, /tactel/, /etil vinil/, /fibra sintetica/]],
     ['RUBBER',   [/\bhule\b/, /latex/, /rubber/, /\btpr\b/]],
     ['METAL',    [/acero/, /aluminio/, /hierro/, /\bzinc\b/, /cobre/, /aleacion/, /metal/, /metalic/, /\blata\b/, /peltre/, /estano/, /laton/, /inoxidable/, /titani/, /niquel/, /zam[ai]c/, /zamak/, /hojalata/]],
