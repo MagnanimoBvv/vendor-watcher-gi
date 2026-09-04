@@ -195,6 +195,7 @@ const printingTechniques = {
     'Tampografía': 'SERIGRAFÍA',
     'Grabado láser': 'GRABADO LÁSER',
     'DTF UV': 'FULL COLOR',
+    'Sticker UV': 'FULL COLOR',
     'serigrafía': 'SERIGRAFÍA',
     'grabado láser (se ilumina el logo).': 'GRABADO LÁSER',
     'Goteado de Resina.': 'GOTA DE RESINA',
