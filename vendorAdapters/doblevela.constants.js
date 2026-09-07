@@ -77,6 +77,7 @@ const categories = {
     'OFICINA - RELOJES': 'oficina,accesorios de oficina',
     'SUBLIMACIÓN - TEQUILEROS': 'bebidas,vasos',
     'SUBLIMACIÓN - DECORATIVOS': 'hogar,accesorios del hogar',
+    'SUBLIMACIÓN - ACCESORIOS': 'hogar,accesorios del hogar',
 };
 
 const extraCategories = {
