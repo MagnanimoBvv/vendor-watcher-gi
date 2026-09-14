@@ -207,6 +207,7 @@ const printingTechniques = {
     'Sandblast': 'GRABADO LÁSER',
     'Sublimado': 'SUBLIMACION',
     'DTF': 'FULL COLOR',
+    'DTF Textil': 'FULL COLOR',
 };
 
 const categories = {
@@ -581,6 +582,7 @@ const categoriesV2 = [
     'Power Bank',
     'Audífonos',
     'Cargadores y power bank',
+    'Accesorios para Celular',
     'Relojes',
     'Cosmetiqueras',
     'Crossbody',

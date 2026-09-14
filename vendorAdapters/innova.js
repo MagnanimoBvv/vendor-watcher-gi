@@ -89,6 +89,7 @@ function getCategories(prod) {
             'Power Bank': ',tecnologia,power banks',
             'Audífonos': ',tecnologia,audifonos y bocinas',
             'Cargadores y power bank': ',tecnologia,accesorios de tecnologia',
+            'Accesorios para Celular': ',tecnologia,accesorios de tecnologia',
             'Relojes': ',oficina,accesorios de oficina',
             'Cosmetiqueras': ',hogar,belleza',
             'Neceser': ',tiempo libre,viaje',
