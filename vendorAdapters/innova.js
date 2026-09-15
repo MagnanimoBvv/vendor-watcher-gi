@@ -38,7 +38,7 @@ async function fetchCatalog({ vendor }) {
     }
 
     return products.map(prod => ({
-        code: String(prod.Codigo).toLowerCase(),
+        code: String(prod.Codigo).toLowerCase().replace(/-+/g, '-'),
         name: prod.Nombre,
         rawPrice: Number(prod.Precio),
         isNewExplicit: null,
