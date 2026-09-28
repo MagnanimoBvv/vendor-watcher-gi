@@ -208,6 +208,7 @@ const printingTechniques = {
     'Sublimado': 'SUBLIMACION',
     'DTF': 'FULL COLOR',
     'DTF Textil': 'FULL COLOR',
+    'Impresión 360': 'FULL COLOR',
 };
 
 const categories = {
