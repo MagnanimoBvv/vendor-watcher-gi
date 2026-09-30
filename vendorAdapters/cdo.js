@@ -160,6 +160,7 @@ function buildProductInput(normalized, ctx) {
             ...(prod.packing && prod.packing.quantity ? [{
                 key: 'piezas_por_caja', namespace: 'custom', type: 'single_line_text_field', value: String(prod.packing.quantity),
             }] : []),
+            { key: 'detalles', namespace: 'custom', type: 'multi_line_text_field', value: prod.description || '' },
         ], shop),
         productOptions: [{ name: 'Color', values: [{ name: 'Default' }] }],
     };

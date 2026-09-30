@@ -111,6 +111,8 @@ function buildProductInput(normalized, ctx) {
               value: `${Number(head.alto_caja)} x ${Number(head.ancho_caja)} x ${Number(head.largo_caja)} cm` },
             { key: 'piezas_por_caja', namespace: 'custom', type: 'single_line_text_field',
               value: String(head.piezas) },
+            { key: 'detalles', namespace: 'custom', type: 'multi_line_text_field',
+              value: head.descripcion || '' },
         ], shop),
         productOptions: [
             { name: 'Color', values: [{ name: 'Default' }] },

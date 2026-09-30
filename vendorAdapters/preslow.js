@@ -73,6 +73,7 @@ function buildProductInput(normalized, ctx) {
             { key: 'material_front', namespace: 'custom', type: 'single_line_text_field', value: head.tela || '' },
             { key: 'tecnicas_de_impresion', namespace: 'custom', type: 'single_line_text_field', value: getNormalizedPrintingTechs(printingTechniques) },
             { key: 'tecnicas_de_impresion_front', namespace: 'custom', type: 'single_line_text_field', value: joinComma(printingTechniques) },
+            { key: 'detalles', namespace: 'custom', type: 'multi_line_text_field', value: head.descripcion || '' },
         ], shop),
         productOptions: [
             { name: 'Color', values: [{ name: 'Default' }] },

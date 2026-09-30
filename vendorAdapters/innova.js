@@ -176,6 +176,7 @@ function buildProductInput(normalized, ctx) {
             { key: 'peso_de_caja', namespace: 'custom', type: 'single_line_text_field', value: prod.EmpaqueMaster[0].Peso || '' },
             { key: 'medidas_de_caja', namespace: 'custom', type: 'single_line_text_field', value: prod['Medidas empaque'] || '' },
             { key: 'piezas_por_caja', namespace: 'custom', type: 'single_line_text_field', value: String(prod['Cantidad empaque'] || '') },
+            { key: 'detalles', namespace: 'custom', type: 'multi_line_text_field', value: prod.Descripcion || '' },
         ], shop),
         productOptions: [
             { name: 'Color', values: [{ name: 'Default' }] },

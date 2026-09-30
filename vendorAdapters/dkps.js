@@ -162,6 +162,7 @@ function buildProductInput(normalized, ctx) {
             ] : []),
             ...(head.medidaCaja ? [{ key: 'medidas_de_caja', namespace: 'custom', type: 'single_line_text_field', value: `${head.medidaCaja} cm` }] : []),
             { key: 'piezas_por_caja', namespace: 'custom', type: 'single_line_text_field', value: String(head.piezasPorCaja || '') },
+            { key: 'detalles', namespace: 'custom', type: 'multi_line_text_field', value: head.descripcion || '' },
         ], shop),
         productOptions: [
             { name: 'Color', values: [{ name: 'Default' }] },

@@ -99,6 +99,7 @@ function buildProductInput(normalized, ctx) {
             { key: 'peso_de_caja', namespace: 'custom', type: 'single_line_text_field', value: head['Peso caja'] || '' },
             { key: 'medidas_de_caja', namespace: 'custom', type: 'single_line_text_field', value: head['Medida Caja Master'] || '' },
             { key: 'piezas_por_caja', namespace: 'custom', type: 'single_line_text_field', value: String(head['Unidad Empaque'] || '') },
+            { key: 'detalles', namespace: 'custom', type: 'multi_line_text_field', value: head.Descripcion || '' },
         ], shop),
         productOptions: [{ name: 'Color', values: [{ name: 'Default' }] }],
     };

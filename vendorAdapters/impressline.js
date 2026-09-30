@@ -88,6 +88,7 @@ function buildProductInput(normalized, ctx) {
             { key: 'peso', namespace: 'custom', type: 'single_line_text_field', value: prod.peso_caja && prod.piezas_por_caja ? `${(parseFloat(prod.peso_caja.replace(' kgs', '')) / prod.piezas_por_caja).toFixed(2)} kg` : '', },
             { key: 'peso_de_caja', namespace: 'custom', type: 'single_line_text_field', value: prod.peso_caja || '' },
             { key: 'piezas_por_caja', namespace: 'custom', type: 'single_line_text_field', value: String(prod.piezas_por_caja || '') },
+            { key: 'detalles', namespace: 'custom', type: 'multi_line_text_field', value: prod.descripcion_completa || '' },
         ], shop),
         productOptions: [{ name: 'Color', values: [{ name: 'Default' }] }],
     };
