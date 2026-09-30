@@ -96,11 +96,11 @@ function buildProductInput(normalized, ctx) {
 
 function buildMedia(prod) {
     const principal = prod.imagen_principal;
-    const productMedia = principal ? [{ mediaContentType: 'IMAGE', originalSource: principal }] : [];
+    const productMedia = principal ? [{ mediaContentType: 'IMAGE', originalSource: encodeURI(principal) }] : [];
     const variantMedia = (prod.skus || []).filter((v, i, arr) => arr.findIndex(x => x.sku === v.sku) === i)
         .flatMap(v => (v.imagenes || [])
         .filter(src => src !== principal)
-        .map((src, i) => ({ alt: i === 0 ? v.color : '', mediaContentType: 'IMAGE', originalSource: src })));
+        .map((src, i) => ({ alt: i === 0 ? v.color : '', mediaContentType: 'IMAGE', originalSource: encodeURI(src) })));
     return [...productMedia, ...variantMedia];
 }
 
