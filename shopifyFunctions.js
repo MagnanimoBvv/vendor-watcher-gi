@@ -24,6 +24,34 @@ function makeShopifyFunctions(client) {
         return res.data.publications.nodes.map(c => ({ publicationId: c.id }));
     }
 
+    async function fetchRemainingVariants(product) {
+        let pageInfo = product.variants.pageInfo;
+        while (pageInfo && pageInfo.hasNextPage) {
+            const res = await client.graphql(`
+                query ($id: ID!, $cursor: String) {
+                    product(id: $id) {
+                        variants(first: 250, after: $cursor) {
+                            pageInfo { hasNextPage endCursor }
+                            nodes {
+                                id
+                                title
+                                price
+                                compareAtPrice
+                                sku
+                                inventoryItem { id unitCost { amount } }
+                                selectedOptions { name value }
+                            }
+                        }
+                    }
+                }
+            `, { id: product.id, cursor: pageInfo.endCursor });
+            const page = res.data.product.variants;
+            product.variants.nodes.push(...page.nodes);
+            pageInfo = page.pageInfo;
+        }
+        return product;
+    }
+
     async function getProductsByVendor(vendorName) {
         const products = [];
         let cursor = null;
@@ -40,7 +68,8 @@ function makeShopifyFunctions(client) {
                         status
                         tags
                         vendor
-                        variants(first: 100) {
+                        variants(first: 250) {
+                            pageInfo { hasNextPage endCursor }
                             nodes {
                                 id
                                 title
@@ -65,6 +94,7 @@ function makeShopifyFunctions(client) {
                 q: `vendor:${vendorName} status:active,draft`,
             });
             const page = res.data.products;
+            for (const p of page.nodes) await fetchRemainingVariants(p);
             products.push(...page.nodes);
             hasNext = page.pageInfo.hasNextPage;
             cursor = page.pageInfo.endCursor;
@@ -84,6 +114,7 @@ function makeShopifyFunctions(client) {
                     tags
                     vendor
                     variants(first: 250) {
+                        pageInfo { hasNextPage endCursor }
                         nodes {
                             id
                             title
@@ -100,7 +131,9 @@ function makeShopifyFunctions(client) {
                 }
             }
         `, { handle });
-        return res.data.productByHandle;
+        const product = res.data.productByHandle;
+        if (product) await fetchRemainingVariants(product);
+        return product;
     }
 
     async function setProductTags(productId, tags) {
