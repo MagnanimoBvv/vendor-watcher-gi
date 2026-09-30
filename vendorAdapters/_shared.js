@@ -50,6 +50,13 @@ function expandVariantForShopify(baseVariant, shop) {
             const stock = Number(copy.inventoryQuantities[0].availableQuantity) || 0;
             copy.inventoryQuantities[0].availableQuantity = stock >= cantidad ? 1 : 0;
         }
+        copy.unitPriceMeasurement = {
+            quantityValue: cantidad,
+            quantityUnit: 'ITEM',
+            referenceValue: 1,
+            referenceUnit: 'ITEM',
+        };
+        copy.showUnitPrice = true;
         copy.optionValues = [
             ...(baseVariant.optionValues || []).filter(o => o.optionName !== 'Cantidad'),
             { name: String(cantidad), optionName: 'Cantidad' },
