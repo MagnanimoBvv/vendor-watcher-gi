@@ -163,7 +163,7 @@ const surfaces = {
     'Aluminio, Abs': 'METAL',
     'Abs, Poliuretano': 'PLÁSTICO',
     'Pongee': 'PLÁSTICO',
-    'Neopreno': 'RUBBER',
+    'Neopreno': 'TEXTIL',
     'Poliamida': 'PLÁSTICO',
     'Elastano': 'RUBBER',
     'Loneta': 'PLÁSTICO',
