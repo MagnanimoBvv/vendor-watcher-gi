@@ -13,6 +13,8 @@ function makeReport() {
                 costosCambiados: 0,
                 variantesAgregadas: 0,
                 coloresNuevos: 0,
+                titulosActualizados: 0,
+                descripcionesActualizadas: 0,
                 tagsAgregados: 0,
                 tagsRetirados: 0,
                 ventanasExpiradas: 0,

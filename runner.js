@@ -9,6 +9,7 @@ const {
     reconcileDiscontinued,
     reconcilePricing,
     reconcileVariants,
+    reconcileProductTexts,
     reconcileMetafields,
 } = require('./reconcilers');
 
@@ -65,6 +66,7 @@ async function runShopVendor(shop, vendor, opts, report) {
         report,
         entry,
         metafieldKeys: opts.metafieldKeys || null,
+        mediaRefreshed: new Set(),
     };
 
     if (opts.updateMetafields) {
@@ -90,6 +92,7 @@ async function runShopVendor(shop, vendor, opts, report) {
     await reconcileDiscontinued(vendorProducts, shopifyByCode, ctx);
     await reconcileNewProducts(vendorProducts, shopifyByCode, ctx);
     await reconcileVariants(vendorProducts, shopifyByCode, ctx);
+    await reconcileProductTexts(vendorProducts, shopifyByCode, ctx);
     await reconcilePricing(vendorProducts, shopifyByCode, ctx);
     await reconcileMetafields(vendorProducts, shopifyByCode, ctx, { mode: 'keep' });
 }

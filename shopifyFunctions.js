@@ -65,6 +65,7 @@ function makeShopifyFunctions(client) {
                         id
                         handle
                         title
+                        descriptionHtml
                         status
                         tags
                         vendor
@@ -110,6 +111,7 @@ function makeShopifyFunctions(client) {
                     id
                     handle
                     title
+                    descriptionHtml
                     status
                     tags
                     vendor
@@ -194,6 +196,25 @@ function makeShopifyFunctions(client) {
         if (!client.dryRun) {
             const errs = res.data.productUpdate.userErrors;
             if (errs.length) console.error(`[setProductStatus ${productId}]`, errs);
+        }
+        return res;
+    }
+
+    async function setProductTexts(productId, { title, descriptionHtml }) {
+        const input = { id: productId };
+        if (title != null) input.title = title;
+        if (descriptionHtml != null) input.descriptionHtml = descriptionHtml;
+        const res = await client.graphql(`
+            mutation ($input: ProductInput!) {
+                productUpdate(input: $input) {
+                    product { id title }
+                    userErrors { field message }
+                }
+            }
+        `, { input }, { isMutation: true });
+        if (!client.dryRun) {
+            const errs = res.data.productUpdate.userErrors;
+            if (errs.length) console.error(`[setProductTexts ${productId}]`, errs);
         }
         return res;
     }
@@ -379,6 +400,7 @@ function makeShopifyFunctions(client) {
         tagsAdd,
         tagsRemove,
         setProductStatus,
+        setProductTexts,
         setMetafields,
         deleteMetafield,
         productVariantsBulkUpdate,

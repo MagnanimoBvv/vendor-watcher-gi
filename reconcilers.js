@@ -267,6 +267,17 @@ async function refreshProductMedia(shopifyProduct, vendorProduct, ctx) {
     return created;
 }
 
+async function relinkVariantMedia(productId, expanded, svByKey, ctx) {
+    const updates = [];
+    for (const e of expanded) {
+        const sv = svByKey.get(e.key);
+        if (sv && e.payload.mediaId) updates.push({ id: sv.id, mediaId: e.payload.mediaId });
+    }
+    if (updates.length > 0) {
+        await ctx.shopifyFns.productVariantsBulkUpdate(productId, updates);
+    }
+}
+
 async function addNuevoColorTag(shopifyProduct, ctx) {
     await ctx.shopifyFns.setMetafields([
         buildWindowMetafieldInput(shopifyProduct.id, 'nuevo color', freshUntilDate(WINDOW_DAYS))
@@ -299,6 +310,7 @@ async function reconcileVariants(vendorProducts, shopifyByCode, ctx) {
             let mediaNodes = null;
             try {
                 mediaNodes = await refreshProductMedia(shopifyProduct, v, ctx);
+                if (mediaNodes) ctx.mediaRefreshed.add(shopifyProduct.id);
             } catch (err) {
                 ctx.report.logError(ctx.entry, `mediaRefresh ${v.code}`, err);
             }
@@ -319,20 +331,82 @@ async function reconcileVariants(vendorProducts, shopifyByCode, ctx) {
             }
 
             if (mediaNodes) {
-                const updates = [];
-                for (const e of expanded) {
-                    const sv = svByKey.get(e.key);
-                    if (sv && e.payload.mediaId) updates.push({ id: sv.id, mediaId: e.payload.mediaId });
-                }
-                if (updates.length > 0) {
-                    await ctx.shopifyFns.productVariantsBulkUpdate(shopifyProduct.id, updates);
-                }
+                await relinkVariantMedia(shopifyProduct.id, expanded, svByKey, ctx);
             }
 
             await addNuevoColorTag(shopifyProduct, ctx);
             ctx.entry.counters.coloresNuevos++;
         } catch (err) {
             ctx.report.logError(ctx.entry, `variants ${v.code}`, err);
+        }
+    }
+}
+
+const HTML_ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+
+// Shopify reescribe el HTML que recibe (entidades, &nbsp;, wrappers), así que se compara
+// sólo el texto visible; si no, el mismo producto se detectaría como cambiado cada corrida.
+function normalizeText(value) {
+    return String(value == null ? '' : value)
+        .replace(/<\/?[a-zA-Z][^>]*>/g, ' ')
+        .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e) => {
+            if (e[0] === '#') {
+                const code = e[1].toLowerCase() === 'x' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+                return Number.isFinite(code) ? String.fromCodePoint(code) : m;
+            }
+            const k = e.toLowerCase();
+            return k in HTML_ENTITIES ? HTML_ENTITIES[k] : m;
+        })
+        .replace(/[\s​]+/g, ' ')
+        .trim();
+}
+
+function textDiffers(target, current) {
+    const t = normalizeText(target);
+    if (t === '') return false;
+    return t !== normalizeText(current);
+}
+
+async function reconcileProductTexts(vendorProducts, shopifyByCode, ctx) {
+    const adapter = ctx.adapter;
+    const shop = ctx.shop;
+    if (typeof adapter.buildProductInput !== 'function') {
+        ctx.report.logError(ctx.entry, 'texts', new Error(`Adapter ${ctx.vendor.adapter} no implementa buildProductInput`));
+        return;
+    }
+
+    for (const v of vendorProducts) {
+        const shopifyProduct = shopifyByCode.get(v.code);
+        if (!shopifyProduct) continue;
+
+        try {
+            const { input } = adapter.buildProductInput(v, ctx);
+            const changes = {};
+            if (textDiffers(input.title, shopifyProduct.title)) changes.title = input.title;
+            if (textDiffers(input.descriptionHtml, shopifyProduct.descriptionHtml)) changes.descriptionHtml = input.descriptionHtml;
+            if (Object.keys(changes).length === 0) continue;
+
+            await ctx.shopifyFns.setProductTexts(shopifyProduct.id, changes);
+            Object.assign(shopifyProduct, changes);
+            if (changes.title != null) ctx.entry.counters.titulosActualizados++;
+            if (changes.descriptionHtml != null) ctx.entry.counters.descripcionesActualizadas++;
+
+            if (ctx.mediaRefreshed.has(shopifyProduct.id)) continue;
+
+            let mediaNodes = null;
+            try {
+                mediaNodes = await refreshProductMedia(shopifyProduct, v, ctx);
+            } catch (err) {
+                ctx.report.logError(ctx.entry, `mediaRefresh ${v.code}`, err);
+            }
+            if (!mediaNodes) continue;
+            ctx.mediaRefreshed.add(shopifyProduct.id);
+
+            const svByKey = indexShopifyVariantsByKey(shopifyProduct.variants.nodes, adapter, shop);
+            const expanded = adapter.expandVariantsForUpload(v, ctx, { id: shopifyProduct.id, media: { nodes: mediaNodes } });
+            await relinkVariantMedia(shopifyProduct.id, expanded, svByKey, ctx);
+        } catch (err) {
+            ctx.report.logError(ctx.entry, `texts ${v.code}`, err);
         }
     }
 }
@@ -390,5 +464,6 @@ module.exports = {
     reconcileDiscontinued,
     reconcilePricing,
     reconcileVariants,
+    reconcileProductTexts,
     reconcileMetafields,
 };
