@@ -31,6 +31,7 @@ const categories = {
     'BEBIDAS - CILINDROS DE VIDRIO': 'bebidas,cilindros de metal y vidrio',
     'TEXTILES - GORRAS': 'textil,gorras y cangureras',
     'LLAVEROS Y HERRAMIENTAS - LLAVEROS': 'tiempo libre,llaveros',
+    'HOGAR Y ESTILO DE VIDA - LLAVEROS': 'tiempo libre,llaveros',
     'TEXTILES - MOCHILAS': 'textil,mochilas y maletas',
     'SUBLIMACIÓN - TEXTIL': 'ecologicos,bolsas ecologicas,textil,bolsas y morrales',
     'TEXTILES - MORRALES': 'textil,bolsas y morrales',
