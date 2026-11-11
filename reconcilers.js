@@ -219,7 +219,7 @@ async function reconcilePricing(vendorProducts, shopifyByCode, ctx) {
             }
 
             if (priceWentDown) {
-
+                // continue; // Descomentar para bajar precios por margen
                 await ctx.shopifyFns.setMetafields([
                     buildWindowMetafieldInput(shopifyProduct.id, 'oferta', freshUntilDate(WINDOW_DAYS))
                 ]);

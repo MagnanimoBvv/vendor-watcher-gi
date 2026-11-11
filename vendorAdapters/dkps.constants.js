@@ -7,6 +7,7 @@ const categories = {
     'PLAYERAS': 'textil,playeras y camisas',
     'SUDADERAS': 'textil,chamarras y chalecos',
     'CHAMARRAS': 'textil,chamarras y chalecos',
+    'CHALECOS': 'textil,chamarras y chalecos',
     'TERMOS': 'bebidas,termos',
     'CILINDROS': 'bebidas,cilindros de plastico',
     'INTERNO': 'hogar,accesorios del hogar',
@@ -73,6 +74,15 @@ const printingTechniques = {
         'Serigrafía'
     ],
     'CHAMARRAS': [
+        'Recorte de Vinil',
+        'DTF',
+        'Sublibordado',
+        'Vinil Impreso',
+        'Bordado',
+        'Sublimación',
+        'Serigrafía'
+    ],
+    'CHALECOS': [
         'Recorte de Vinil',
         'DTF',
         'Sublibordado',
