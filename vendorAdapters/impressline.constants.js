@@ -10,7 +10,7 @@ const categories = {
     'bolsas-backpacks-maletas-hieleras - backpack-mochilas-casuales': '', //
     'bebidas - termos-metalicos': 'bebidas,termos',
     'boligrafos - plastico-funciones-extra-funciones-plus-anadido-plus': 'oficina,boligrafos multifuncionales',
-    'casa-hogar - casa-hogar': '', //
+    'casa-hogar - casa-hogar-general': '', //
     'escritorio-oficina-office-time - portadocumentos-premium': 'oficina,accesorios de oficina',
     'bolsas-backpacks-maletas-hieleras - backpack-maletas-premium': 'textil,mochilas y maletas',
     'escritorio-oficina-office-time - reloj-escritorio-premium': 'oficina,accesorios de oficina',
@@ -34,7 +34,7 @@ const categories = {
 const ecoCategories = {
     'boligrafos - boligrafos-ecologicos': '',
     'escritorio-oficina-office-time - libretas-ecologicas': '',
-    'casa-hogar - casa-hogar': ',ecologicos,hogar ecologico',
+    'casa-hogar - casa-hogar-general': ',ecologicos,hogar ecologico',
     'escritorio-oficina-office-time - portadocumentos-premium': ',ecologicos,oficina ecologica',
     'bolsas-backpacks-maletas-hieleras - hieleras-termos': ',ecologicos,bolsas ecologicas',
     'salud-relax - salud-cuidado': ',ecologicos,hogar ecologico',

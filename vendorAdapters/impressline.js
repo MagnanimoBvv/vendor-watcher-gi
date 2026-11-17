@@ -46,12 +46,13 @@ function getCategories(prod) {
     if (cs === 'bebidas - tarros-vasos-tazas') {
         extra += ['vaso', 'tarro', 'set'].includes(fw) ? ',bebidas,vasos' : ',bebidas,tazas';
     }
-    if (cs === 'casa-hogar - casa-hogar') {
-        extra += ['contenedor', 'vaporizador'].includes(fw) ? ',hogar,accesorios del hogar' : ',hogar,cocina';
+    if (cs === 'casa-hogar - casa-hogar-general') {
+        extra += ['contenedor', 'contendor', 'vaporizador', 'vela', 'reed', 'aromatizante'].includes(fw) ? ',hogar,accesorios del hogar' : ',hogar,cocina';
     }
     if (cs === 'outdoors-viajes-camping - outdoors-camping') {
         extra += fw === 'paraguas' ? ',textil,paraguas e impermeables'
-            : fw === 'kit' ? ',tiempo libre,herramientas de trabajo' : ',hogar,cocina';
+            : fw === 'kit' ? ',tiempo libre,herramientas de trabajo'
+            : fw === 'silla' ? ',tiempo libre,viaje' : ',hogar,cocina';
     }
     if ((prod.etiquetas || []).includes('producto-ecologico')) extra += ecoCategories[cs] || '';
     return (categories[cs] || '') + extra;
