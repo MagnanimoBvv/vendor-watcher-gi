@@ -41,7 +41,7 @@
     "graphqlUrlEnv": "GRAPHQL_URL_HHG",
     "handleFormat": "standard",
     "productFormat": "simple",
-    "vendors": ["4p", "po", "in", "dv", "cdo", "il", "g4", "dk", "pw"],
+    "vendors": ["4p", "po", "in", "dv", "cdo", "il", "g4", "dk", "pw", "iu"],
     "priceDivisor": {
       "default": 0.67
     },
