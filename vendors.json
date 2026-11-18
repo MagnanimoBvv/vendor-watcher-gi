@@ -122,5 +122,18 @@
       "pricing":      { "field": "precio_distribuidor", "iva": 0.16 },
       "variantKey":   { "strategy": "sku", "field": "modelo_ct" }
     }
+  },
+  {
+    "abbr": "iu",
+    "name": "ImportacionesUSB",
+    "adapter": "importacionesusb",
+    "endpoint": "https://webservice-importaciones.web.app/json",
+    "credentialEnvs": [],
+    "rules": {
+      "newProducts":  { "strategy": "diff" },
+      "discontinued": { "strategy": "diff" },
+      "pricing":      { "field": "precio", "iva": 0.16 },
+      "variantKey":   { "strategy": "sku", "field": "sku" }
+    }
   }
 ]

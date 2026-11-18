@@ -8,6 +8,7 @@ const REGISTRY = {
     'preslow':     () => require('./preslow'),
     'impressline': () => require('./impressline'),
     'dkps':        () => require('./dkps'),
+    'importacionesusb': () => require('./importacionesusb'),
 };
 
 function getAdapter(name) {

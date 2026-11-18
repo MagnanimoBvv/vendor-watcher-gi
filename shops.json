@@ -5,7 +5,7 @@
     "graphqlUrlEnv": "GRAPHQL_URL_GI",
     "handleFormat": "standard",
     "productFormat": "simple",
-    "vendors": ["4p", "po", "in", "dv", "cdo", "il", "g4", "dk", "pw"],
+    "vendors": ["4p", "po", "in", "dv", "cdo", "il", "g4", "dk", "pw", "iu"],
     "priceDivisor": {
       "default": 0.3
     },
@@ -31,7 +31,8 @@
       "Impressline": "il",
       "G4": "g4",
       "DKPS": "dk",
-      "Preslow": "pw"
+      "Preslow": "pw",
+      "ImportacionesUSB": "iu"
     }
   },
   {
@@ -59,7 +60,8 @@
       "Impressline": "il",
       "G4": "g4",
       "DKPS": "dk",
-      "Preslow": "pw"
+      "Preslow": "pw",
+      "ImportacionesUSB": "iu"
     }
   },
   {
