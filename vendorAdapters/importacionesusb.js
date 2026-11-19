@@ -1,7 +1,7 @@
 const axios = require('axios');
 const { buildHandle } = require('../handleParser');
 const { printableSurface } = require('./surfaces');
-const { addCantidadOption, applyDescriptionTemplate, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields, buildClassificationMetafields, filterMetafieldKeys } = require('./_shared');
+const { addCantidadOption, expandVariantForShopify, getShopifyVariantKey, mapShopMetafields, buildClassificationMetafields, filterMetafieldKeys } = require('./_shared');
 const { normalizedSurfaces, printingTechniques, secondaryOptions, primaryCategories, extraCategories } = require('./importacionesusb.constants');
 
 function norm(s) {
@@ -158,7 +158,7 @@ function buildProductInput(normalized, ctx) {
             ...(secondaryName ? [{ name: secondaryName, values: [{ name: 'Default' }] }] : []),
         ],
     };
-    return { input: addCantidadOption(applyDescriptionTemplate(base, shop), shop), meta: { secondaryName } };
+    return { input: addCantidadOption(base, shop), meta: { secondaryName } };
 }
 
 function uniqueImageUrls(group) {
